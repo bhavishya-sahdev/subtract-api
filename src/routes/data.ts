@@ -1,7 +1,10 @@
 import {
+    findSubscriptionByUuid,
     findSubscriptionsByOwnerId,
     insertSubscription,
     NewSubscription,
+    UpdateSubscription,
+    updateSubscriptionByUuid,
 } from "db/schema/subscription"
 import { findUserByUuid } from "db/schema/user"
 import { Hono } from "hono"
@@ -46,6 +49,30 @@ data.get("/user/subscriptions", async (c) => {
 })
 
 /**
+ * Get subscription by uuid
+ */
+data.get("/subscription/:uuid", async (c) => {
+    const payload = verifyAndDecodeTokenFromHeader(c)
+    if (payload.error) {
+        return c.json(
+            { data: null, error: payload.error.message },
+            payload.error.status
+        )
+    }
+
+    const { uuid: subscriptionId } = c.req.param()
+    try {
+        const subscriptions = await findSubscriptionByUuid(
+            subscriptionId,
+            payload.data.userId
+        )
+        return c.json({ data: subscriptions, error: null })
+    } catch (err: any) {
+        return c.json({ error: err.message, data: null }, 500)
+    }
+})
+
+/**
  * Create subscription
  */
 data.post("/subscription", async (c) => {
@@ -63,6 +90,31 @@ data.post("/subscription", async (c) => {
             ownerId: payload.data.userId,
         })
         return c.json({ data: insertedSubscription[0], error: null })
+    } catch (err: any) {
+        return c.json({ error: err.message, data: null }, 500)
+    }
+})
+
+/**
+ * Update subscription
+ */
+data.post("/subscription/:uuid/update", async (c) => {
+    const payload = verifyAndDecodeTokenFromHeader(c)
+    if (payload.error) {
+        return c.json(
+            { data: null, error: payload.error.message },
+            payload.error.status
+        )
+    }
+    const data: UpdateSubscription = await c.req.json()
+    const { uuid: subscriptionId } = c.req.param()
+    try {
+        const updatedSubscription = await updateSubscriptionByUuid(
+            subscriptionId,
+            data,
+            payload.data.userId
+        )
+        return c.json({ data: updatedSubscription[0], error: null })
     } catch (err: any) {
         return c.json({ error: err.message, data: null }, 500)
     }

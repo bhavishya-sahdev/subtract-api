@@ -9,7 +9,7 @@ import {
 import { OmitDefaultsFromType } from "lib/utils"
 import { user } from "./user"
 import { sharedColumns } from "./shared"
-import { eq, relations } from "drizzle-orm"
+import { and, eq, relations } from "drizzle-orm"
 import { db } from "db/connect"
 
 export const renewalPeriodEnum = pgEnum("renewal_period", [
@@ -41,6 +41,10 @@ export type NewSubscription = OmitDefaultsFromType<
     typeof subscription.$inferSelect,
     "uuid" | "ownerId"
 >
+export type UpdateSubscription = OmitDefaultsFromType<
+    typeof subscription.$inferInsert,
+    "uuid" | "ownerId"
+>
 
 export const postsRelations = relations(subscription, ({ one }) => ({
     user: one(user, {
@@ -63,4 +67,25 @@ export const findSubscriptionsByOwnerId = async (ownerId: string) => {
         .select()
         .from(subscription)
         .where(eq(subscription.ownerId, ownerId))
+}
+export const findSubscriptionByUuid = async (uuid: string, ownerId: string) => {
+    return await db
+        .select()
+        .from(subscription)
+        .where(
+            and(eq(subscription.uuid, uuid), eq(subscription.ownerId, ownerId))
+        )
+}
+export const updateSubscriptionByUuid = async (
+    uuid: string,
+    updatedColumns: UpdateSubscription,
+    ownerId: string
+) => {
+    return await db
+        .update(subscription)
+        .set(updatedColumns)
+        .where(
+            and(eq(subscription.uuid, uuid), eq(subscription.ownerId, ownerId))
+        )
+        .returning({ updatedSubscriptionId: subscription.uuid })
 }
