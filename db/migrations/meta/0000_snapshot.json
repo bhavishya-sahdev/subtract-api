@@ -1,5 +1,5 @@
 {
-  "id": "da29f4c4-68b1-42f9-a225-01dc6dbdfad4",
+  "id": "f35f770e-9a01-41f3-bebb-07012165a23f",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "5",
   "dialect": "pg",
@@ -23,15 +23,17 @@
         },
         "created_at": {
           "name": "created_at",
-          "type": "date",
+          "type": "timestamp with time zone",
           "primaryKey": false,
-          "notNull": false
+          "notNull": false,
+          "default": "now()"
         },
         "updated_at": {
           "name": "updated_at",
-          "type": "date",
+          "type": "timestamp with time zone",
           "primaryKey": false,
-          "notNull": false
+          "notNull": false,
+          "default": "now()"
         },
         "service_name": {
           "name": "service_name",
@@ -76,8 +78,8 @@
           "primaryKey": false,
           "notNull": false
         },
-        "user_id": {
-          "name": "user_id",
+        "owner_id": {
+          "name": "owner_id",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
@@ -85,12 +87,12 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "subscription_user_id_user_uuid_fk": {
-          "name": "subscription_user_id_user_uuid_fk",
+        "subscription_owner_id_user_uuid_fk": {
+          "name": "subscription_owner_id_user_uuid_fk",
           "tableFrom": "subscription",
           "tableTo": "user",
           "columnsFrom": [
-            "user_id"
+            "owner_id"
           ],
           "columnsTo": [
             "uuid"
@@ -100,15 +102,7 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "subscription_id_unique": {
-          "name": "subscription_id_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "id"
-          ]
-        }
-      }
+      "uniqueConstraints": {}
     },
     "user": {
       "name": "user",
@@ -129,15 +123,17 @@
         },
         "created_at": {
           "name": "created_at",
-          "type": "date",
+          "type": "timestamp with time zone",
           "primaryKey": false,
-          "notNull": false
+          "notNull": false,
+          "default": "now()"
         },
         "updated_at": {
           "name": "updated_at",
-          "type": "date",
+          "type": "timestamp with time zone",
           "primaryKey": false,
-          "notNull": false
+          "notNull": false,
+          "default": "now()"
         },
         "name": {
           "name": "name",
@@ -150,19 +146,18 @@
           "type": "varchar",
           "primaryKey": false,
           "notNull": true
+        },
+        "hashed_password": {
+          "name": "hashed_password",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
         }
       },
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "user_id_unique": {
-          "name": "user_id_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "id"
-          ]
-        },
         "user_email_unique": {
           "name": "user_email_unique",
           "nullsNotDistinct": false,

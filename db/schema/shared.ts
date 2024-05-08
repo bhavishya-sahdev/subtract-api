@@ -1,8 +1,16 @@
-import { serial, uuid, date } from "drizzle-orm/pg-core"
+import { serial, uuid, timestamp } from "drizzle-orm/pg-core"
 
 export const sharedColumns = {
-    id: serial("id").unique(),
+    id: serial("id"),
     uuid: uuid("uuid").defaultRandom().primaryKey(),
-    createdAt: date("created_at", { mode: "date" }),
-    updatedAt: date("updated_at", { mode: "date" }),
+    createdAt: timestamp("created_at", {
+        mode: "date",
+        withTimezone: true,
+    }).defaultNow(),
+    updatedAt: timestamp("updated_at", {
+        mode: "date",
+        withTimezone: true,
+    })
+        .defaultNow()
+        .$onUpdate(() => new Date()),
 }

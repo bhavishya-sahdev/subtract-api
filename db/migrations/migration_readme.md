@@ -1,5 +1,5 @@
 This readme will contain information regarding the migrations made so that it's easier to revert back when required
 
-## 0000_dry_retro_girl
+### 0000_needy_mandrill
 
-Initialize users and subscriptions tables
+Initialize users and subscriptions tables. Initialized one to many relationship between user to subscription.

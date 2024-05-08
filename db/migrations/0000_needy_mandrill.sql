@@ -7,8 +7,8 @@ END $$;
 CREATE TABLE IF NOT EXISTS "subscription" (
 	"id" serial NOT NULL,
 	"uuid" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"created_at" date,
-	"updated_at" date,
+	"created_at" timestamp with time zone DEFAULT now(),
+	"updated_at" timestamp with time zone DEFAULT now(),
 	"service_name" varchar NOT NULL,
 	"created_date" date,
 	"renewal_period" "renewal_period" DEFAULT 'other',
@@ -16,23 +16,22 @@ CREATE TABLE IF NOT EXISTS "subscription" (
 	"currency" varchar NOT NULL,
 	"renewal_price" numeric NOT NULL,
 	"total_cost" numeric,
-	"user_id" uuid NOT NULL,
-	CONSTRAINT "subscription_id_unique" UNIQUE("id")
+	"owner_id" uuid NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "user" (
 	"id" serial NOT NULL,
 	"uuid" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"created_at" date,
-	"updated_at" date,
+	"created_at" timestamp with time zone DEFAULT now(),
+	"updated_at" timestamp with time zone DEFAULT now(),
 	"name" varchar NOT NULL,
 	"email" varchar NOT NULL,
-	CONSTRAINT "user_id_unique" UNIQUE("id"),
+	"hashed_password" varchar NOT NULL,
 	CONSTRAINT "user_email_unique" UNIQUE("email")
 );
 --> statement-breakpoint
 DO $$ BEGIN
- ALTER TABLE "subscription" ADD CONSTRAINT "subscription_user_id_user_uuid_fk" FOREIGN KEY ("user_id") REFERENCES "user"("uuid") ON DELETE cascade ON UPDATE no action;
+ ALTER TABLE "subscription" ADD CONSTRAINT "subscription_owner_id_user_uuid_fk" FOREIGN KEY ("owner_id") REFERENCES "user"("uuid") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;

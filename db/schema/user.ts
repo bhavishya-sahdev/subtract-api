@@ -1,15 +1,35 @@
 import { pgTable, varchar } from "drizzle-orm/pg-core"
-import { OmitDefaultsFromType } from "../../lib/utils"
+import { OmitDefaultsFromType } from "lib/utils"
 import { sharedColumns } from "./shared"
+import { eq, relations } from "drizzle-orm"
+import { subscription } from "./subscription"
+import { db } from "db/connect"
 
 export const user = pgTable("user", {
     ...sharedColumns,
 
     name: varchar("name").notNull(),
     email: varchar("email").notNull().unique(),
-
-    // auth related data
+    hashedPassword: varchar("hashed_password").notNull(),
 })
+
+export const usersRelations = relations(user, ({ many }) => ({
+    subscriptions: many(subscription),
+}))
 
 export type User = OmitDefaultsFromType<typeof user.$inferSelect>
 export type NewUser = OmitDefaultsFromType<typeof user.$inferInsert, "uuid">
+
+export const insertUser = async (newUser: NewUser) => {
+    return db
+        .insert(user)
+        .values(newUser)
+        .returning({ insertedUserId: user.uuid })
+}
+
+export const findUserByEmail = async (email: string) => {
+    return db
+        .select({ hashedPassword: user.hashedPassword, uuid: user.uuid })
+        .from(user)
+        .where(eq(user.email, email))
+}
