@@ -9,7 +9,8 @@ import {
 import { OmitDefaultsFromType } from "lib/utils"
 import { user } from "./user"
 import { sharedColumns } from "./shared"
-import { relations } from "drizzle-orm"
+import { eq, relations } from "drizzle-orm"
+import { db } from "db/connect"
 
 export const renewalPeriodEnum = pgEnum("renewal_period", [
     "monthly",
@@ -38,7 +39,7 @@ export type Subscription = OmitDefaultsFromType<
 >
 export type NewSubscription = OmitDefaultsFromType<
     typeof subscription.$inferSelect,
-    "uuid"
+    "uuid" | "ownerId"
 >
 
 export const postsRelations = relations(subscription, ({ one }) => ({
@@ -47,3 +48,19 @@ export const postsRelations = relations(subscription, ({ one }) => ({
         references: [user.uuid],
     }),
 }))
+
+export const insertSubscription = async (
+    newSub: NewSubscription & { ownerId: string }
+) => {
+    return await db
+        .insert(subscription)
+        .values(newSub)
+        .returning({ insertedSubscriptionId: subscription.uuid })
+}
+
+export const findSubscriptionsByOwnerId = async (ownerId: string) => {
+    return await db
+        .select()
+        .from(subscription)
+        .where(eq(subscription.ownerId, ownerId))
+}
