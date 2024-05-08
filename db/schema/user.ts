@@ -33,3 +33,17 @@ export const findUserByEmail = async (email: string) => {
         .from(user)
         .where(eq(user.email, email))
 }
+
+export const findUserByUuid = async (uuid: string) => {
+    return db
+        .select({
+            id: user.id,
+            uuid: user.uuid,
+            email: user.email,
+            name: user.name,
+            updatedAt: user.updatedAt,
+            createdAt: user.createdAt,
+        })
+        .from(user)
+        .where(eq(user.uuid, uuid))
+}
