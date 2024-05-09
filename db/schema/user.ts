@@ -13,7 +13,7 @@ export const user = pgTable("user", {
     hashedPassword: varchar("hashed_password").notNull(),
 })
 
-export const usersRelations = relations(user, ({ many }) => ({
+export const userRelations = relations(user, ({ many }) => ({
     subscriptions: many(subscription),
 }))
 

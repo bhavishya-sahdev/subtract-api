@@ -11,6 +11,7 @@ import { user } from "./user"
 import { sharedColumns } from "./shared"
 import { and, eq, relations } from "drizzle-orm"
 import { db } from "db/connect"
+import { payment } from "./payment"
 
 export const renewalPeriodEnum = pgEnum("renewal_period", [
     "monthly",
@@ -46,11 +47,12 @@ export type UpdateSubscription = OmitDefaultsFromType<
     "uuid" | "ownerId"
 >
 
-export const postsRelations = relations(subscription, ({ one }) => ({
+export const postRelations = relations(subscription, ({ one, many }) => ({
     user: one(user, {
         fields: [subscription.ownerId],
         references: [user.uuid],
     }),
+    payment: many(payment),
 }))
 
 export const insertSubscription = async (
