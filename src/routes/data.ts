@@ -1,4 +1,5 @@
 import {
+    deleteSubscriptionByUuid,
     findSubscriptionByUuid,
     findSubscriptionsByOwnerId,
     insertSubscription,
@@ -115,6 +116,29 @@ data.post("/subscription/:uuid/update", async (c) => {
             payload.data.userId
         )
         return c.json({ data: updatedSubscription[0], error: null })
+    } catch (err: any) {
+        return c.json({ error: err.message, data: null }, 500)
+    }
+})
+
+/**
+ * Delete subscription
+ */
+data.post("/subscription/:uuid/delete", async (c) => {
+    const payload = verifyAndDecodeTokenFromHeader(c)
+    if (payload.error) {
+        return c.json(
+            { data: null, error: payload.error.message },
+            payload.error.status
+        )
+    }
+    const { uuid: subscriptionId } = c.req.param()
+    try {
+        const deletedSubscription = await deleteSubscriptionByUuid(
+            subscriptionId,
+            payload.data.userId
+        )
+        return c.json({ data: deletedSubscription[0], error: null })
     } catch (err: any) {
         return c.json({ error: err.message, data: null }, 500)
     }

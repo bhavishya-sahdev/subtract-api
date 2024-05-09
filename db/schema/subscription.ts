@@ -68,6 +68,7 @@ export const findSubscriptionsByOwnerId = async (ownerId: string) => {
         .from(subscription)
         .where(eq(subscription.ownerId, ownerId))
 }
+
 export const findSubscriptionByUuid = async (uuid: string, ownerId: string) => {
     return await db
         .select()
@@ -76,6 +77,7 @@ export const findSubscriptionByUuid = async (uuid: string, ownerId: string) => {
             and(eq(subscription.uuid, uuid), eq(subscription.ownerId, ownerId))
         )
 }
+
 export const updateSubscriptionByUuid = async (
     uuid: string,
     updatedColumns: UpdateSubscription,
@@ -88,4 +90,16 @@ export const updateSubscriptionByUuid = async (
             and(eq(subscription.uuid, uuid), eq(subscription.ownerId, ownerId))
         )
         .returning({ updatedSubscriptionId: subscription.uuid })
+}
+
+export const deleteSubscriptionByUuid = async (
+    uuid: string,
+    ownerId: string
+) => {
+    return await db
+        .delete(subscription)
+        .where(
+            and(eq(subscription.uuid, uuid), eq(subscription.ownerId, ownerId))
+        )
+        .returning({ deleteSubscriptionId: subscription.uuid })
 }
