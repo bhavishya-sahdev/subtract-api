@@ -10,6 +10,8 @@ import {
 import { findUserByUuid } from "db/schema/user"
 import { Hono } from "hono"
 import { verifyAndDecodeTokenFromHeader } from "lib/utils"
+import { z } from "zod"
+
 export const data = new Hono()
 
 /**
@@ -73,6 +75,17 @@ data.get("/subscription/:uuid", async (c) => {
     }
 })
 
+const newSubscriptionSchema = z.object({
+    name: z.string(),
+    creationDate: z.date().optional(),
+    renewalPeriod: z
+        .enum(["monthly", "weekly", "annually", "other"])
+        .optional(),
+    upcomingPaymentDate: z.date().optional(),
+    currency: z.string(),
+    renewalPrice: z.number(),
+})
+
 /**
  * Create subscription
  */
@@ -84,7 +97,15 @@ data.post("/subscription", async (c) => {
             payload.error.status
         )
     }
-    const data: NewSubscription = await c.req.json()
+    const data = await c.req.json()
+    const validatedInput = newSubscriptionSchema.safeParse(data)
+    if (!validatedInput.success) {
+        return c.json(
+            { error: validatedInput.error.flatten().fieldErrors, data: null },
+            400
+        )
+    }
+
     try {
         const insertedSubscription = await insertSubscription({
             ...data,
@@ -96,6 +117,16 @@ data.post("/subscription", async (c) => {
     }
 })
 
+const updateSubscriptionSchema = z.object({
+    name: z.string().optional(),
+    creationDate: z.date().optional(),
+    renewalPeriod: z
+        .enum(["monthly", "weekly", "annually", "other"])
+        .optional(),
+    upcomingPaymentDate: z.date().optional(),
+    currency: z.string().optional(),
+    renewalPrice: z.number().optional(),
+})
 /**
  * Update subscription
  */
@@ -107,7 +138,14 @@ data.post("/subscription/:uuid/update", async (c) => {
             payload.error.status
         )
     }
-    const data: UpdateSubscription = await c.req.json()
+    const data = await c.req.json()
+    const validatedInput = updateSubscriptionSchema.safeParse(data)
+    if (!validatedInput.success) {
+        return c.json(
+            { error: validatedInput.error.flatten().fieldErrors, data: null },
+            400
+        )
+    }
     const { uuid: subscriptionId } = c.req.param()
     try {
         const updatedSubscription = await updateSubscriptionByUuid(
