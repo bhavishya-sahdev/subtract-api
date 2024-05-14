@@ -86,7 +86,7 @@ auth.post("/login", async (c) => {
         }
 
         const token = generateToken({ userId: foundUser[0].uuid })
-        return c.json({ token })
+        return c.json({ data: token, error: null })
     } catch (err: any) {
         return c.json({ error: err.message, data: null }, 400)
     }
