@@ -1,11 +1,18 @@
 import {
+    deletePaymentByUuid,
+    findPaymentByUuid,
+    findPaymentsByOwnerId,
+    insertPayment,
+    updatePaymentByUuid,
+    validPaymentStatusValues,
+} from "db/schema/payment"
+import {
     deleteSubscriptionByUuid,
     findSubscriptionByUuid,
     findSubscriptionsByOwnerId,
     insertSubscription,
-    NewSubscription,
-    UpdateSubscription,
     updateSubscriptionByUuid,
+    validRenewalPeriodValues,
 } from "db/schema/subscription"
 import { findUserByUuid } from "db/schema/user"
 import { Hono } from "hono"
@@ -78,9 +85,7 @@ data.get("/subscription/:uuid", async (c) => {
 const newSubscriptionSchema = z.object({
     name: z.string(),
     creationDate: z.date().optional(),
-    renewalPeriod: z
-        .enum(["monthly", "weekly", "annually", "other"])
-        .optional(),
+    renewalPeriod: z.enum(validRenewalPeriodValues).optional(),
     upcomingPaymentDate: z.date().optional(),
     currency: z.string(),
     renewalPrice: z.number(),
@@ -120,9 +125,7 @@ data.post("/subscription", async (c) => {
 const updateSubscriptionSchema = z.object({
     name: z.string().optional(),
     creationDate: z.date().optional(),
-    renewalPeriod: z
-        .enum(["monthly", "weekly", "annually", "other"])
-        .optional(),
+    renewalPeriod: z.enum(validRenewalPeriodValues).optional(),
     upcomingPaymentDate: z.date().optional(),
     currency: z.string().optional(),
     renewalPrice: z.number().optional(),
@@ -177,6 +180,151 @@ data.post("/subscription/:uuid/delete", async (c) => {
             payload.data.userId
         )
         return c.json({ data: deletedSubscription[0], error: null })
+    } catch (err: any) {
+        return c.json({ error: err.message, data: null }, 500)
+    }
+})
+
+/**
+ * Get all payments by user
+ */
+data.get("/user/payments", async (c) => {
+    const payload = verifyAndDecodeTokenFromHeader(c)
+    if (payload.error) {
+        return c.json(
+            { data: null, error: payload.error.message },
+            payload.error.status
+        )
+    }
+
+    try {
+        const payments = await findPaymentsByOwnerId(payload.data.userId)
+        return c.json({ data: payments, error: null })
+    } catch (err: any) {
+        return c.json({ error: err.message, data: null }, 500)
+    }
+})
+
+/**
+ * Get payment by uuid
+ */
+data.get("/payment/:uuid", async (c) => {
+    const payload = verifyAndDecodeTokenFromHeader(c)
+    if (payload.error) {
+        return c.json(
+            { data: null, error: payload.error.message },
+            payload.error.status
+        )
+    }
+
+    const { uuid: paymentId } = c.req.param()
+    try {
+        const payment = await findPaymentByUuid(paymentId, payload.data.userId)
+        return c.json({ data: payment, error: null })
+    } catch (err: any) {
+        return c.json({ error: err.message, data: null }, 500)
+    }
+})
+
+const newPaymentSchema = z.object({
+    subscriptionId: z.string(),
+    date: z.date(),
+    currency: z.string(),
+    amount: z.number(),
+    paymentMethod: z.string().optional(),
+    paymentStatus: z.enum(validPaymentStatusValues).optional(),
+})
+
+/**
+ * Create payment
+ */
+data.post("/payment", async (c) => {
+    const payload = verifyAndDecodeTokenFromHeader(c)
+    if (payload.error) {
+        return c.json(
+            { data: null, error: payload.error.message },
+            payload.error.status
+        )
+    }
+    const data = await c.req.json()
+    const validatedInput = newPaymentSchema.safeParse(data)
+    if (!validatedInput.success) {
+        return c.json(
+            { error: validatedInput.error.flatten().fieldErrors, data: null },
+            400
+        )
+    }
+
+    try {
+        const insertedPayment = await insertPayment({
+            ...data,
+            ownerId: payload.data.userId,
+        })
+        return c.json({ data: insertedPayment[0], error: null })
+    } catch (err: any) {
+        return c.json({ error: err.message, data: null }, 500)
+    }
+})
+
+const updatePaymentSchema = z.object({
+    subscriptionId: z.string().optional(),
+    date: z.date().optional(),
+    currency: z.string().optional(),
+    amount: z.number().optional(),
+    paymentMethod: z.string().optional(),
+    paymentStatus: z.enum(validPaymentStatusValues).optional(),
+})
+
+/**
+ * Update payment
+ */
+data.post("/payment/:uuid/update", async (c) => {
+    const payload = verifyAndDecodeTokenFromHeader(c)
+    if (payload.error) {
+        return c.json(
+            { data: null, error: payload.error.message },
+            payload.error.status
+        )
+    }
+    const data = await c.req.json()
+    const validatedInput = updatePaymentSchema.safeParse(data)
+    if (!validatedInput.success) {
+        return c.json(
+            { error: validatedInput.error.flatten().fieldErrors, data: null },
+            400
+        )
+    }
+    const { uuid: paymentId } = c.req.param()
+    try {
+        const updatedPayment = await updatePaymentByUuid(
+            paymentId,
+            data,
+            payload.data.userId
+        )
+        return c.json({ data: updatedPayment[0], error: null })
+    } catch (err: any) {
+        return c.json({ error: err.message, data: null }, 500)
+    }
+})
+
+/**
+ * Delete payment
+ */
+data.post("/payment/:uuid/delete", async (c) => {
+    const payload = verifyAndDecodeTokenFromHeader(c)
+    if (payload.error) {
+        return c.json(
+            { data: null, error: payload.error.message },
+            payload.error.status
+        )
+    }
+    const { uuid: paymentId } = c.req.param()
+    try {
+        const deletedPayment = await deletePaymentByUuid(
+            paymentId,
+            payload.data.userId
+        )
+        return c.json({ data: deletedPayment[0], error: null })
     } catch (err: any) {
         return c.json({ error: err.message, data: null }, 500)
     }

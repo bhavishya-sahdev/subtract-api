@@ -4,6 +4,7 @@ import { sharedColumns } from "./shared"
 import { eq, relations } from "drizzle-orm"
 import { subscription } from "./subscription"
 import { db } from "db/connect"
+import { payment } from "./payment"
 
 export const user = pgTable("user", {
     ...sharedColumns,
@@ -15,6 +16,7 @@ export const user = pgTable("user", {
 
 export const userRelations = relations(user, ({ many }) => ({
     subscriptions: many(subscription),
+    payments: many(payment),
 }))
 
 export type User = OmitDefaultsFromType<typeof user.$inferSelect>

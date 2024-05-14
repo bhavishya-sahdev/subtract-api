@@ -13,7 +13,13 @@ import { and, eq, relations } from "drizzle-orm"
 import { db } from "db/connect"
 import { payment } from "./payment"
 
-export const renewalPeriodEnum = pgEnum("renewal_period", [
+export const validRenewalPeriodValues = [
+    "monthly",
+    "weekly",
+    "annually",
+    "other",
+] as const
+export const renewalPeriodEnum = pgEnum("renewal_period_enum", [
     "monthly",
     "weekly",
     "annually",
@@ -28,7 +34,7 @@ export const subscription = pgTable("subscription", {
     renewalPeriod: renewalPeriodEnum("renewal_period").default("other"),
     upcomingPaymentDate: date("upcoming_payment_date", { mode: "date" }),
     currency: varchar("currency").notNull(),
-    renewalPrice: numeric("renewal_price").notNull(),
+    renewalAmount: numeric("renewal_amount").notNull(),
     totalCost: numeric("total_cost"),
     ownerId: uuid("owner_id")
         .references(() => user.uuid, { onDelete: "cascade" })

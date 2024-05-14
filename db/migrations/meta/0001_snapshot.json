@@ -1,10 +1,10 @@
 {
-  "id": "89c8f3d4-60d6-47a2-892d-7038291c4629",
-  "prevId": "f35f770e-9a01-41f3-bebb-07012165a23f",
-  "version": "5",
-  "dialect": "pg",
+  "id": "7cdccc12-2879-4646-9bac-0ce5be55c271",
+  "prevId": "5a362e83-79a1-4aed-a5a0-036ec99d9cf2",
+  "version": "6",
+  "dialect": "postgresql",
   "tables": {
-    "payment": {
+    "public.payment": {
       "name": "payment",
       "schema": "",
       "columns": {
@@ -47,17 +47,36 @@
           "primaryKey": false,
           "notNull": true
         },
+        "owner_id": {
+          "name": "owner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
         "currency": {
           "name": "currency",
           "type": "varchar",
           "primaryKey": false,
           "notNull": true
         },
-        "price": {
-          "name": "price",
+        "amount": {
+          "name": "amount",
           "type": "numeric",
           "primaryKey": false,
           "notNull": true
+        },
+        "payment_method": {
+          "name": "payment_method",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "payment_status": {
+          "name": "payment_status",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'pending'"
         }
       },
       "indexes": {},
@@ -74,12 +93,25 @@
           ],
           "onDelete": "cascade",
           "onUpdate": "no action"
+        },
+        "payment_owner_id_user_uuid_fk": {
+          "name": "payment_owner_id_user_uuid_fk",
+          "tableFrom": "payment",
+          "tableTo": "user",
+          "columnsFrom": [
+            "owner_id"
+          ],
+          "columnsTo": [
+            "uuid"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "subscription": {
+    "public.subscription": {
       "name": "subscription",
       "schema": "",
       "columns": {
@@ -124,7 +156,8 @@
         },
         "renewal_period": {
           "name": "renewal_period",
-          "type": "renewal_period",
+          "type": "renewal_period_enum",
+          "typeSchema": "public",
           "primaryKey": false,
           "notNull": false,
           "default": "'other'"
@@ -141,8 +174,8 @@
           "primaryKey": false,
           "notNull": true
         },
-        "renewal_price": {
-          "name": "renewal_price",
+        "renewal_amount": {
+          "name": "renewal_amount",
           "type": "numeric",
           "primaryKey": false,
           "notNull": true
@@ -179,7 +212,7 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "user": {
+    "public.user": {
       "name": "user",
       "schema": "",
       "columns": {
@@ -244,14 +277,15 @@
     }
   },
   "enums": {
-    "renewal_period": {
-      "name": "renewal_period",
-      "values": {
-        "monthly": "monthly",
-        "weekly": "weekly",
-        "annually": "annually",
-        "other": "other"
-      }
+    "public.renewal_period_enum": {
+      "name": "renewal_period_enum",
+      "schema": "public",
+      "values": [
+        "monthly",
+        "weekly",
+        "annually",
+        "other"
+      ]
     }
   },
   "schemas": {},
