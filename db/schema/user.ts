@@ -1,4 +1,4 @@
-import { integer, pgTable, varchar } from "drizzle-orm/pg-core"
+import { boolean, integer, pgTable, varchar } from "drizzle-orm/pg-core"
 import { OmitDefaultsFromType } from "lib/utils"
 import { sharedColumns } from "./shared"
 import { eq, relations } from "drizzle-orm"
@@ -14,6 +14,7 @@ export const user = pgTable("user", {
     hashedPassword: varchar("hashed_password").notNull(),
     subscriptionCount: integer("subscription_count"),
     paymentCount: integer("payment_count"),
+    isOnboardingComplete: boolean("is_onboarding_complete").default(false),
 })
 
 export const userRelations = relations(user, ({ many }) => ({
