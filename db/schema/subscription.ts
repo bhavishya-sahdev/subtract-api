@@ -5,6 +5,7 @@ import {
     varchar,
     date,
     numeric,
+    integer,
 } from "drizzle-orm/pg-core"
 import { OmitDefaultsFromType } from "lib/utils"
 import { user } from "./user"
@@ -39,6 +40,7 @@ export const subscription = pgTable("subscription", {
     ownerId: uuid("owner_id")
         .references(() => user.uuid, { onDelete: "cascade" })
         .notNull(),
+    paymentCount: integer("payment_count"),
 })
 
 export type Subscription = OmitDefaultsFromType<

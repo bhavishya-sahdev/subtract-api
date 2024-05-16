@@ -1,4 +1,4 @@
-import { pgTable, varchar } from "drizzle-orm/pg-core"
+import { integer, pgTable, varchar } from "drizzle-orm/pg-core"
 import { OmitDefaultsFromType } from "lib/utils"
 import { sharedColumns } from "./shared"
 import { eq, relations } from "drizzle-orm"
@@ -12,6 +12,8 @@ export const user = pgTable("user", {
     name: varchar("name").notNull(),
     email: varchar("email").notNull().unique(),
     hashedPassword: varchar("hashed_password").notNull(),
+    subscriptionCount: integer("subscription_count"),
+    paymentCount: integer("payment_count"),
 })
 
 export const userRelations = relations(user, ({ many }) => ({
