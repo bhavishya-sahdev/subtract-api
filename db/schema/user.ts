@@ -24,11 +24,22 @@ export const userRelations = relations(user, ({ many }) => ({
 
 export type User = OmitDefaultsFromType<typeof user.$inferSelect>
 export type NewUser = OmitDefaultsFromType<typeof user.$inferInsert, "uuid">
+export type UpdateUser = Partial<
+    OmitDefaultsFromType<typeof user.$inferInsert, "uuid">
+>
 
 export const insertUser = async (newUser: NewUser) => {
     return db
         .insert(user)
         .values(newUser)
+        .returning({ insertedUserId: user.uuid })
+}
+
+export const updateUser = async (uuid: string, updatedColumns: UpdateUser) => {
+    return db
+        .update(user)
+        .set(updatedColumns)
+        .where(eq(user.uuid, uuid))
         .returning({ insertedUserId: user.uuid })
 }
 
