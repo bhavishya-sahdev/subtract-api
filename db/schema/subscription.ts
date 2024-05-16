@@ -40,7 +40,7 @@ export const subscription = pgTable("subscription", {
     ownerId: uuid("owner_id")
         .references(() => user.uuid, { onDelete: "cascade" })
         .notNull(),
-    paymentCount: integer("payment_count"),
+    paymentCount: integer("payment_count").default(0),
 })
 
 export type Subscription = OmitDefaultsFromType<

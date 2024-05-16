@@ -12,8 +12,8 @@ export const user = pgTable("user", {
     name: varchar("name").notNull(),
     email: varchar("email").notNull().unique(),
     hashedPassword: varchar("hashed_password").notNull(),
-    subscriptionCount: integer("subscription_count"),
-    paymentCount: integer("payment_count"),
+    subscriptionCount: integer("subscription_count").default(0),
+    paymentCount: integer("payment_count").default(0),
     isOnboardingComplete: boolean("is_onboarding_complete").default(false),
 })
 
@@ -40,7 +40,7 @@ export const updateUser = async (uuid: string, updatedColumns: UpdateUser) => {
         .update(user)
         .set(updatedColumns)
         .where(eq(user.uuid, uuid))
-        .returning({ insertedUserId: user.uuid })
+        .returning({ updatedUserId: user.uuid })
 }
 
 export const findUserByEmail = async (email: string) => {
@@ -53,12 +53,13 @@ export const findUserByEmail = async (email: string) => {
 export const findUserByUuid = async (uuid: string) => {
     return db
         .select({
-            id: user.id,
             uuid: user.uuid,
             email: user.email,
             name: user.name,
             updatedAt: user.updatedAt,
             createdAt: user.createdAt,
+            isOnboardingComplete: user.isOnboardingComplete,
+            subscriptionCount: user.subscriptionCount,
         })
         .from(user)
         .where(eq(user.uuid, uuid))
