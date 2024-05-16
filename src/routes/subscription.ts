@@ -6,7 +6,7 @@ import {
     validRenewalPeriodValues,
 } from "db/schema/subscription"
 import { Hono } from "hono"
-import { verifyAndDecodeTokenFromCookie } from "lib/utils"
+import { verifyAndDecodeTokenFromHeader } from "lib/utils"
 import { z } from "zod"
 
 export const subscription = new Hono()
@@ -15,7 +15,7 @@ export const subscription = new Hono()
  * Get subscription by uuid
  */
 subscription.get("/:uuid", async (c) => {
-    const payload = verifyAndDecodeTokenFromCookie(c)
+    const payload = verifyAndDecodeTokenFromHeader(c)
     if (payload.error) {
         return c.json(
             { data: null, error: payload.error.message },
@@ -48,7 +48,7 @@ const newSubscriptionSchema = z.object({
  * Create subscription
  */
 subscription.post("/", async (c) => {
-    const payload = verifyAndDecodeTokenFromCookie(c)
+    const payload = verifyAndDecodeTokenFromHeader(c)
     if (payload.error) {
         return c.json(
             { data: null, error: payload.error.message },
@@ -87,7 +87,7 @@ const updateSubscriptionSchema = z.object({
  * Update subscription
  */
 subscription.post("/:uuid/update", async (c) => {
-    const payload = verifyAndDecodeTokenFromCookie(c)
+    const payload = verifyAndDecodeTokenFromHeader(c)
     if (payload.error) {
         return c.json(
             { data: null, error: payload.error.message },
@@ -119,7 +119,7 @@ subscription.post("/:uuid/update", async (c) => {
  * Delete subscription
  */
 subscription.post("/:uuid/delete", async (c) => {
-    const payload = verifyAndDecodeTokenFromCookie(c)
+    const payload = verifyAndDecodeTokenFromHeader(c)
     if (payload.error) {
         return c.json(
             { data: null, error: payload.error.message },

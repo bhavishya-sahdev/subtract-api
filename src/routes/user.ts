@@ -2,14 +2,14 @@ import { findPaymentsByOwnerId } from "db/schema/payment"
 import { findSubscriptionsByOwnerId } from "db/schema/subscription"
 import { findUserByUuid, updateUser } from "db/schema/user"
 import { Hono } from "hono"
-import { verifyAndDecodeTokenFromCookie } from "lib/utils"
+import { verifyAndDecodeTokenFromHeader } from "lib/utils"
 export const user = new Hono()
 
 /**
  * Get user details
  */
 user.get("/", async (c) => {
-    const payload = verifyAndDecodeTokenFromCookie(c)
+    const payload = verifyAndDecodeTokenFromHeader(c)
     if (payload.error) {
         return c.json(
             { data: null, error: payload.error.message },
@@ -24,7 +24,7 @@ user.get("/", async (c) => {
  * Get all subscriptions by user
  */
 user.get("/subscriptions", async (c) => {
-    const payload = verifyAndDecodeTokenFromCookie(c)
+    const payload = verifyAndDecodeTokenFromHeader(c)
     if (payload.error) {
         return c.json(
             { data: null, error: payload.error.message },
@@ -46,7 +46,7 @@ user.get("/subscriptions", async (c) => {
  * Get all payments by user
  */
 user.get("/payments", async (c) => {
-    const payload = verifyAndDecodeTokenFromCookie(c)
+    const payload = verifyAndDecodeTokenFromHeader(c)
     if (payload.error) {
         return c.json(
             { data: null, error: payload.error.message },
@@ -63,7 +63,7 @@ user.get("/payments", async (c) => {
 })
 
 user.post("/update-onboarding-status", async (c) => {
-    const payload = verifyAndDecodeTokenFromCookie(c)
+    const payload = verifyAndDecodeTokenFromHeader(c)
     if (payload.error) {
         return c.json(
             { data: null, error: payload.error.message },
