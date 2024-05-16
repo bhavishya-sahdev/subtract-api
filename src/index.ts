@@ -4,9 +4,14 @@ import { auth } from "./routes/auth"
 import { payment } from "./routes/payment"
 import { user } from "./routes/user"
 import { subscription } from "./routes/subscription"
+import { logger } from "hono/logger"
+import { showRoutes } from "hono/dev"
 
 const app = new Hono()
+
+const isDevelopment = process.env.NODE_ENV === "development"
 app.use(cors({ origin: "*" }))
+if (isDevelopment) app.use(logger())
 
 app.get("/helloworld", (c) => {
     return c.json({ data: "res" })
@@ -15,5 +20,6 @@ app.route("/auth", auth)
 app.route("/user", user)
 app.route("/subscription", subscription)
 app.route("/payment", payment)
+if (isDevelopment) showRoutes(app)
 
 export default app

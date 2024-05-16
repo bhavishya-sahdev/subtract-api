@@ -43,12 +43,11 @@ auth.post("/signup", async (c) => {
             )
         const newUser = await insertUser({ name, email, hashedPassword })
         const token = generateToken({ userId: newUser[0].insertedUserId })
-        setCookie(c, "token", token, {
-            secure: true,
-            httpOnly: true,
-        })
-
-        return c.json({ data: { message: "Authenticated" }, error: null })
+        // setCookie(c, "token", token, {
+        //     secure: true,
+        //     httpOnly: true,
+        // })
+        return c.json({ data: { token }, error: null })
     } catch (err: any) {
         return c.json({ error: err.message, data: null }, 400)
     }
@@ -59,7 +58,7 @@ export const loginUserSchema = z.object({
     password: z.string(),
 })
 
-auth.post("/login", async (c) => {
+auth.post("/signin", async (c) => {
     const { email, password } = await c.req.json()
     const validatedInput = loginUserSchema.safeParse({ email, password })
     if (!validatedInput.success) {
@@ -92,11 +91,12 @@ auth.post("/login", async (c) => {
         }
 
         const token = generateToken({ userId: foundUser[0].uuid })
-        setCookie(c, "token", token, {
-            secure: true,
-            httpOnly: true,
-        })
-        return c.json({ data: { message: "Authenticated" }, error: null })
+        // setCookie(c, "token", token, {
+        //     secure: true,
+        //     httpOnly: true,
+        //     domain: "/",
+        // })
+        return c.json({ data: { token }, error: null })
     } catch (err: any) {
         return c.json({ error: err.message, data: null }, 400)
     }
