@@ -4,6 +4,7 @@ import { generateToken } from "lib/jwt"
 import { findUserByEmail, insertUser } from "db/schema/user"
 import { z } from "zod"
 import { setCookie } from "hono/cookie"
+import { addHours } from "date-fns"
 
 export const auth = new Hono()
 
@@ -48,6 +49,7 @@ auth.post("/signup", async (c) => {
             httpOnly: true,
             domain: "localhost",
             sameSite: "Lax",
+            expires: addHours(new Date(), 1),
         })
         return c.json({ data: { token }, error: null })
     } catch (err: any) {
@@ -98,6 +100,7 @@ auth.post("/signin", async (c) => {
             httpOnly: true,
             domain: "localhost",
             sameSite: "Lax",
+            expires: addHours(new Date(), 1),
         })
         return c.json({ data: { token }, error: null })
     } catch (err: any) {

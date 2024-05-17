@@ -7,6 +7,7 @@
     "@types/bcrypt": "^5.0.2",
     "@types/jsonwebtoken": "^9.0.6",
     "bcrypt": "^5.1.1",
+    "date-fns": "^3.6.0",
     "drizzle-orm": "^0.30.10",
     "drizzle-zod": "^0.5.1",
     "hono": "^4.3.2",
