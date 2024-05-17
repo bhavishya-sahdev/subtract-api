@@ -38,15 +38,17 @@ auth.post("/signup", async (c) => {
         const existingUser = await findUserByEmail(email)
         if (existingUser.length > 0)
             return c.json(
-                { error: { email: ["Invalid email"] }, data: null },
+                { error: { email: ["Email already in use"] }, data: null },
                 400
             )
         const newUser = await insertUser({ name, email, hashedPassword })
         const token = generateToken({ userId: newUser[0].insertedUserId })
-        // setCookie(c, "token", token, {
-        //     secure: true,
-        //     httpOnly: true,
-        // })
+        setCookie(c, "token", token, {
+            secure: process.env.NODE_ENV === "development" ? false : true,
+            httpOnly: true,
+            domain: "localhost",
+            sameSite: "Lax",
+        })
         return c.json({ data: { token }, error: null })
     } catch (err: any) {
         return c.json({ error: err.message, data: null }, 400)
@@ -91,11 +93,12 @@ auth.post("/signin", async (c) => {
         }
 
         const token = generateToken({ userId: foundUser[0].uuid })
-        // setCookie(c, "token", token, {
-        //     secure: true,
-        //     httpOnly: true,
-        //     domain: "/",
-        // })
+        setCookie(c, "token", token, {
+            secure: process.env.NODE_ENV === "development" ? false : true,
+            httpOnly: true,
+            domain: "localhost",
+            sameSite: "Lax",
+        })
         return c.json({ data: { token }, error: null })
     } catch (err: any) {
         return c.json({ error: err.message, data: null }, 400)
