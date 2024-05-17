@@ -10,7 +10,12 @@ import { showRoutes } from "hono/dev"
 const app = new Hono()
 
 const isDevelopment = process.env.NODE_ENV === "development"
-app.use(cors({ origin: "*" }))
+app.use(
+    cors({
+        origin: "http://localhost:5173",
+        credentials: true,
+    })
+)
 if (isDevelopment) app.use(logger())
 
 app.get("/helloworld", (c) => {
