@@ -16,15 +16,16 @@ app.use(
         credentials: true,
     })
 )
-if (isDevelopment) app.use(logger())
 
-app.get("/helloworld", (c) => {
+app.use(logger())
+app.get("/", (c) => {
     return c.json({ data: "res" })
 })
 app.route("/auth", auth)
 app.route("/user", user)
 app.route("/subscription", subscription)
 app.route("/payment", payment)
+
 if (isDevelopment) showRoutes(app)
 
 export default app
