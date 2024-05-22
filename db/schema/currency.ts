@@ -33,7 +33,19 @@ export const insertCurrency = async (newCurrencies: NewCurrency[]) => {
 }
 
 export const getAllCurrencies = async () => {
-    return db.select().from(currency).orderBy(currency.name)
+    return db
+        .select({
+            uuid: currency.uuid,
+            symbol: currency.symbol,
+            name: currency.name,
+            symbolNative: currency.symbolNative,
+            decimalDigits: currency.decimalDigits,
+            rounding: currency.rounding,
+            code: currency.code,
+            namePlural: currency.namePlural,
+        })
+        .from(currency)
+        .orderBy(currency.name)
 }
 
 export const findCurrencyByUuid = async (uuid: string) => {
