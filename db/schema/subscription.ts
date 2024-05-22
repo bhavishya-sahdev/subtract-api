@@ -13,6 +13,7 @@ import { sharedColumns } from "./shared"
 import { and, eq, relations } from "drizzle-orm"
 import { db } from "db/connect"
 import { payment } from "./payment"
+import { currency } from "./currency"
 
 export const validRenewalPeriodValues = [
     "monthly",
@@ -34,7 +35,9 @@ export const subscription = pgTable("subscription", {
     creationDate: date("created_date", { mode: "date" }),
     renewalPeriod: renewalPeriodEnum("renewal_period").default("other"),
     upcomingPaymentDate: date("upcoming_payment_date", { mode: "date" }),
-    currency: varchar("currency").notNull(),
+    currencyId: uuid("currency_id")
+        .references(() => currency.uuid)
+        .notNull(),
     renewalAmount: numeric("renewal_amount").notNull(),
     totalCost: numeric("total_cost"),
     ownerId: uuid("owner_id")
@@ -61,6 +64,10 @@ export const postRelations = relations(subscription, ({ one, many }) => ({
         references: [user.uuid],
     }),
     payment: many(payment),
+    currency: one(currency, {
+        fields: [subscription.currencyId],
+        references: [currency.uuid],
+    }),
 }))
 
 export const insertSubscription = async (

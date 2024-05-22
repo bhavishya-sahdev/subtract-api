@@ -12,6 +12,7 @@ import { OmitDefaultsFromType } from "lib/utils"
 import { and, eq, relations } from "drizzle-orm"
 import { db } from "db/connect"
 import { user } from "./user"
+import { currency } from "./currency"
 
 export const validPaymentStatusValues = [
     "paid",
@@ -36,7 +37,9 @@ export const payment = pgTable("payment", {
     ownerId: uuid("owner_id")
         .references(() => user.uuid, { onDelete: "cascade" })
         .notNull(),
-    currency: varchar("currency").notNull(),
+    currencyId: uuid("currency_id")
+        .references(() => currency.uuid)
+        .notNull(),
     amount: numeric("amount").notNull(),
     paymentMethod: varchar("payment_method"),
     paymentStatus: varchar("payment_status").default("pending"),
@@ -50,6 +53,10 @@ export const paymentRelations = relations(payment, ({ one }) => ({
     user: one(user, {
         fields: [payment.ownerId],
         references: [user.uuid],
+    }),
+    currency: one(currency, {
+        fields: [payment.currencyId],
+        references: [currency.uuid],
     }),
 }))
 

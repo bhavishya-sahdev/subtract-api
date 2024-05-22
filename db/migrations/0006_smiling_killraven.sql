@@ -1,0 +1,1 @@
+ALTER TABLE "currency" ALTER COLUMN "rounding" SET DATA TYPE numeric;

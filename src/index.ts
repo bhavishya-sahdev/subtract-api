@@ -6,6 +6,7 @@ import { user } from "./routes/user"
 import { subscription } from "./routes/subscription"
 import { logger } from "hono/logger"
 import { showRoutes } from "hono/dev"
+import { currency } from "./routes/currency"
 
 const app = new Hono()
 
@@ -25,6 +26,7 @@ app.route("/auth", auth)
 app.route("/user", user)
 app.route("/subscription", subscription)
 app.route("/payment", payment)
+app.route("/currency", currency)
 
 if (isDevelopment) showRoutes(app)
 

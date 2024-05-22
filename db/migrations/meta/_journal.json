@@ -36,6 +36,20 @@
       "when": 1715842099719,
       "tag": "0004_low_riptide",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1716358143669,
+      "tag": "0005_quick_harrier",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1716358241203,
+      "tag": "0006_smiling_killraven",
+      "breakpoints": true
     }
   ]
 }
