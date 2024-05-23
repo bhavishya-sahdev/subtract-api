@@ -63,10 +63,12 @@ payment.post("/", async (c) => {
     }
 
     try {
-        const insertedPayment = await insertPayment({
-            ...data,
-            ownerId: payload.data.userId,
-        })
+        const insertedPayment = await insertPayment(
+            {
+                ...data,
+            },
+            payload.data.userId
+        )
         return c.json({ data: insertedPayment[0], error: null })
     } catch (err: any) {
         return c.json({ error: err.message, data: null }, 500)
