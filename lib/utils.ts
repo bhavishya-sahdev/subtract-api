@@ -51,3 +51,10 @@ export const verifyAndDecodeTokenFromCookie = <T extends Context>(
 
     return { data: payload, error: null }
 }
+
+export const returnJsonData = <T extends unknown>(data: T) => {
+    return { data, error: null }
+}
+export const returnJsonError = <T extends unknown>(error: T) => {
+    return { data: null, error }
+}
