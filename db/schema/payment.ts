@@ -63,15 +63,16 @@ export const paymentRelations = relations(payment, ({ one }) => ({
 export type Payment = OmitDefaultsFromType<typeof payment.$inferSelect>
 export type NewPayment = OmitDefaultsFromType<
     typeof payment.$inferInsert,
-    "uuid" | "subscriptionId"
+    "uuid" | "subscriptionId" | "ownerId"
 >
 
 export const insertPayment = async (
-    newPayment: NewPayment & { subscriptionId: string }
+    newPayment: NewPayment & { subscriptionId: string },
+    ownerId: string
 ) => {
     return db
         .insert(payment)
-        .values(newPayment)
+        .values({ ownerId, ...newPayment })
         .returning({ insertedPaymentId: payment.uuid })
 }
 
