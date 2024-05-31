@@ -1,12 +1,18 @@
+import { validPaymentStatusValues } from "db/schema/payment"
 import {
     deleteSubscriptionByUuid,
     findSubscriptionByUuid,
     insertSubscription,
+    insertSubscriptionWithPayments,
     updateSubscriptionByUuid,
     validRenewalPeriodValues,
 } from "db/schema/subscription"
 import { Hono } from "hono"
-import { verifyAndDecodeTokenFromHeader } from "lib/utils"
+import { newPaymentSchema, newSubscriptionSchema } from "lib/types"
+import {
+    verifyAndDecodeTokenFromCookie,
+    verifyAndDecodeTokenFromHeader,
+} from "lib/utils"
 import { z } from "zod"
 
 export const subscription = new Hono()
@@ -35,14 +41,17 @@ subscription.get("/:uuid", async (c) => {
     }
 })
 
-const newSubscriptionSchema = z.object({
-    name: z.string(),
-    creationDate: z.date().optional(),
-    renewalPeriod: z.enum(validRenewalPeriodValues).optional(),
-    upcomingPaymentDate: z.date().optional(),
-    currency: z.string(),
-    renewalPrice: z.number(),
-})
+// const newSubscriptionSchema = z.object({
+//     name: z.string(),
+//     creationDate: z.coerce.date(),
+//     renewalPeriodEnum: z.enum(validRenewalPeriodValues),
+//     renewalPeriodDays: z.number(),
+//     // upcomingPaymentDate: z.date(),
+//     currencyId: z.string(),
+//     renewalAmount: z.coerce.string(),
+//     // paymentCount: z.number(),
+//     // totalCost: z.coerce.string(),
+// })
 
 /**
  * Create subscription
