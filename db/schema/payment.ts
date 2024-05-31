@@ -14,13 +14,8 @@ import { db } from "db/connect"
 import { user } from "./user"
 import { currency } from "./currency"
 
-export const validPaymentStatusValues = [
-    "paid",
-    "failed",
-    "pending",
-    "refunded",
-] as const
-const paymentStatusEnum = pgEnum(
+export const validPaymentStatusValues = ["paid", "upcoming", "pending"] as const
+export const paymentStatusEnum = pgEnum(
     "payment_status_enum",
     validPaymentStatusValues
 )
