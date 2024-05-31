@@ -120,3 +120,37 @@ export const deleteSubscriptionByUuid = async (
         )
         .returning({ deleteSubscriptionId: subscription.uuid })
 }
+
+export const insertSubscriptionWithPayments = async (
+    newSubs: TNewSubscription[],
+    newPayments: TNewPayment[][],
+    ownerId: string
+) => {
+    const res = await db.transaction(async (txn) => {
+        const subIds = await txn
+            .insert(subscription)
+            .values(newSubs.map((n) => ({ ...n, ownerId: ownerId })))
+            .returning({
+                subscriptionId: subscription.uuid,
+                ownerId: subscription.ownerId,
+            })
+
+        const paymentIds = newPayments.map(
+            async (payments, idx) =>
+                await txn
+                    .insert(payment)
+                    .values(
+                        payments.map((p) => ({
+                            ...p,
+                            subscriptionId: subIds[idx].subscriptionId,
+                            ownerId: subIds[idx].ownerId,
+                        }))
+                    )
+                    .returning({ paymentId: payment.uuid })
+        )
+
+        return { subscriptions: subIds, payments: paymentIds }
+    })
+
+    return res
+}
