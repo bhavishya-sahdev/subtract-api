@@ -37,7 +37,7 @@ export const payment = pgTable("payment", {
         .notNull(),
     amount: numeric("amount").notNull(),
     paymentMethod: varchar("payment_method"),
-    paymentStatus: varchar("payment_status").default("pending"),
+    paymentStatusEnum: paymentStatusEnum("payment_status_enum").default("paid"),
 })
 
 export const paymentRelations = relations(payment, ({ one }) => ({
