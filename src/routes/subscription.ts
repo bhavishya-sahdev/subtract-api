@@ -137,3 +137,36 @@ subscription.post("/:uuid/delete", async (c) => {
         return c.json({ error: err.message, data: null }, 500)
     }
 })
+
+subscription.post("/payments", async (c) => {
+    const payload = verifyAndDecodeTokenFromCookie(c)
+    if (payload.error) {
+        return c.json(
+            { data: null, error: payload.error.message },
+            payload.error.status
+        )
+    }
+
+    const data = await c.req.json()
+    const validatedInput = z
+        .object({
+            subscriptions: newSubscriptionSchema.array(),
+            payments: newPaymentSchema.array().array(),
+        })
+        .safeParse(data)
+
+    if (!validatedInput.success) {
+        return c.json({ error: validatedInput.error, data: null }, 400)
+    }
+
+    try {
+        const insertedSubscription = await insertSubscriptionWithPayments(
+            validatedInput.data.subscriptions,
+            validatedInput.data.payments,
+            payload.data.userId
+        )
+        return c.json({ data: insertedSubscription, error: null })
+    } catch (err: any) {
+        return c.json({ error: err, data: null }, 500)
+    }
+})
