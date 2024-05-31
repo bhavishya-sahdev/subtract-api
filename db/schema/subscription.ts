@@ -71,11 +71,25 @@ export const postRelations = relations(subscription, ({ one, many }) => ({
 }))
 
 export const insertSubscription = async (
-    newSub: NewSubscription & { ownerId: string }
+    newSub: Omit<
+        NewSubscription,
+        "paymentCount" | "upcomingPaymentDate" | "totalCost"
+    >[],
+    userId: string
 ) => {
+    const newList: (NewSubscription & { ownerId: string })[] = newSub.map(
+        (item) => ({
+            ...item,
+            ownerId: userId,
+            paymentCount: 0,
+            upcomingPaymentDate: new Date(),
+            totalCost: "12",
+        })
+    )
+
     return await db
         .insert(subscription)
-        .values(newSub)
+        .values(newList)
         .returning({ insertedSubscriptionId: subscription.uuid })
 }
 
