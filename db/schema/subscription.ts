@@ -14,6 +14,7 @@ import { and, eq, relations } from "drizzle-orm"
 import { db } from "db/connect"
 import { payment } from "./payment"
 import { currency } from "./currency"
+import { TNewPayment, TNewSubscription } from "lib/types"
 
 export const validRenewalPeriodValues = [
     "monthly",
@@ -21,19 +22,20 @@ export const validRenewalPeriodValues = [
     "annually",
     "other",
 ] as const
-export const renewalPeriodEnum = pgEnum("renewal_period_enum", [
-    "monthly",
-    "weekly",
-    "annually",
-    "other",
-])
+export const renewalPeriodEnum = pgEnum(
+    "renewal_period_enum",
+    validRenewalPeriodValues
+)
 
 export const subscription = pgTable("subscription", {
     ...sharedColumns,
 
     name: varchar("service_name").notNull(),
     creationDate: date("created_date", { mode: "date" }),
-    renewalPeriod: renewalPeriodEnum("renewal_period").default("other"),
+    renewalPeriodEnum: renewalPeriodEnum("renewal_period_enum").default(
+        "other"
+    ),
+    renewalPeriodDays: integer("renewal_period_days").default(1),
     upcomingPaymentDate: date("upcoming_payment_date", { mode: "date" }),
     currencyId: uuid("currency_id")
         .references(() => currency.uuid)
