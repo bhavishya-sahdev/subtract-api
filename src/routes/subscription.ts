@@ -48,7 +48,7 @@ const newSubscriptionSchema = z.object({
  * Create subscription
  */
 subscription.post("/", async (c) => {
-    const payload = verifyAndDecodeTokenFromHeader(c)
+    const payload = verifyAndDecodeTokenFromCookie(c)
     if (payload.error) {
         return c.json(
             { data: null, error: payload.error.message },
@@ -56,22 +56,20 @@ subscription.post("/", async (c) => {
         )
     }
     const data = await c.req.json()
-    const validatedInput = newSubscriptionSchema.safeParse(data)
+    const validatedInput = newSubscriptionSchema.array().safeParse(data)
+
     if (!validatedInput.success) {
-        return c.json(
-            { error: validatedInput.error.flatten().fieldErrors, data: null },
-            400
-        )
+        return c.json({ error: validatedInput.error, data: null }, 400)
     }
 
     try {
-        const insertedSubscription = await insertSubscription({
-            ...data,
-            ownerId: payload.data.userId,
-        })
-        return c.json({ data: insertedSubscription[0], error: null })
+        const insertedSubscription = await insertSubscription(
+            validatedInput.data,
+            payload.data.userId
+        )
+        return c.json({ data: insertedSubscription, error: null })
     } catch (err: any) {
-        return c.json({ error: err.message, data: null }, 500)
+        return c.json({ error: err, data: null }, 500)
     }
 })
 
