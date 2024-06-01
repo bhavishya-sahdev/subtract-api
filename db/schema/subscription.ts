@@ -164,8 +164,7 @@ export const insertSubscriptionWithPayments = async (
                     )
                     .returning({ paymentId: payment.uuid })
         )
-
-        return { subscriptions: subIds, payments: paymentIds }
+        return { subscriptions: subIds }
     })
 
     return res
