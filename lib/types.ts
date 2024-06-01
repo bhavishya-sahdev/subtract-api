@@ -7,7 +7,7 @@ export const newSubscriptionSchema = z.object({
     creationDate: z.coerce.date(),
     renewalPeriodEnum: z.enum(validRenewalPeriodValues),
     renewalPeriodDays: z.number(),
-    upcomingPaymentDate: z.date().min(new Date()),
+    upcomingPaymentDate: z.coerce.date().min(new Date()),
     currencyId: z.string(),
     renewalAmount: z.coerce.string(),
     paymentCount: z.number(),
@@ -15,7 +15,7 @@ export const newSubscriptionSchema = z.object({
 })
 
 export const newPaymentSchema = z.object({
-    date: z.date(),
+    date: z.coerce.date(),
     currencyId: z.string(),
     amount: z.coerce.string(),
     paymentMethod: z.string().optional(),
