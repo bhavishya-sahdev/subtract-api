@@ -2,7 +2,10 @@ import { findPaymentsByOwnerId } from "db/schema/payment"
 import { findSubscriptionsByOwnerId } from "db/schema/subscription"
 import { findUserByUuid, updateUser } from "db/schema/user"
 import { Hono } from "hono"
-import { verifyAndDecodeTokenFromHeader } from "lib/utils"
+import {
+    verifyAndDecodeTokenFromCookie,
+    verifyAndDecodeTokenFromHeader,
+} from "lib/utils"
 export const user = new Hono()
 
 /**
@@ -63,7 +66,7 @@ user.get("/payments", async (c) => {
 })
 
 user.post("/update-onboarding-status", async (c) => {
-    const payload = verifyAndDecodeTokenFromHeader(c)
+    const payload = verifyAndDecodeTokenFromCookie(c)
     if (payload.error) {
         return c.json(
             { data: null, error: payload.error.message },
