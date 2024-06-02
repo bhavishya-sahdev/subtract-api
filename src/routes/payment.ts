@@ -7,6 +7,7 @@ import {
 } from "db/schema/payment"
 
 import { Hono } from "hono"
+import { newPaymentSchema } from "lib/types"
 import { verifyAndDecodeTokenFromHeader } from "lib/utils"
 import { z } from "zod"
 
@@ -31,15 +32,6 @@ payment.get("/:uuid", async (c) => {
     } catch (err: any) {
         return c.json({ error: err.message, data: null }, 500)
     }
-})
-
-const newPaymentSchema = z.object({
-    subscriptionId: z.string(),
-    date: z.date(),
-    currency: z.string(),
-    amount: z.number(),
-    paymentMethod: z.string().optional(),
-    paymentStatus: z.enum(validPaymentStatusValues).optional(),
 })
 
 /**
