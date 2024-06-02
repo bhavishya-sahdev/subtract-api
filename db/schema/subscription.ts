@@ -51,10 +51,7 @@ export const subscription = pgTable("subscription", {
 export type Subscription = OmitDefaultsFromType<
     typeof subscription.$inferSelect
 >
-export type NewSubscription = OmitDefaultsFromType<
-    typeof subscription.$inferSelect,
-    "uuid" | "ownerId"
->
+
 export type UpdateSubscription = OmitDefaultsFromType<
     typeof subscription.$inferInsert,
     "uuid" | "ownerId"
@@ -74,18 +71,17 @@ export const postRelations = relations(subscription, ({ one, many }) => ({
 
 export const insertSubscription = async (
     newSub: Omit<
-        NewSubscription,
+        TNewSubscription,
         "paymentCount" | "upcomingPaymentDate" | "totalCost"
     >[],
     userId: string
 ) => {
-    const newList: (NewSubscription & { ownerId: string })[] = newSub.map(
+    const newList: (TNewSubscription & { ownerId: string })[] = newSub.map(
         (item) => ({
             ...item,
             ownerId: userId,
-            paymentCount: 0,
             upcomingPaymentDate: new Date(),
-            totalCost: "12",
+            totalCost: "0",
         })
     )
 
@@ -151,7 +147,7 @@ export const insertSubscriptionWithPayments = async (
                 ownerId: subscription.ownerId,
             })
 
-        const paymentIds = newPayments.map(
+        newPayments.map(
             async (payments, idx) =>
                 await txn
                     .insert(payment)
