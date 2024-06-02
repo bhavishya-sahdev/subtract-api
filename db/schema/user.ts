@@ -64,3 +64,25 @@ export const findUserByUuid = async (uuid: string) => {
         .from(user)
         .where(eq(user.uuid, uuid))
 }
+
+export const findUserByUuidWithSubscriptions = async (uuid: string) => {
+    const selectedUser = await db
+        .select({
+            uuid: user.uuid,
+            email: user.email,
+            name: user.name,
+            updatedAt: user.updatedAt,
+            createdAt: user.createdAt,
+            isOnboardingComplete: user.isOnboardingComplete,
+            subscriptionCount: user.subscriptionCount,
+        })
+        .from(user)
+        .where(eq(user.uuid, uuid))
+
+    const selectedSubs = await db
+        .select()
+        .from(subscription)
+        .where(eq(subscription.ownerId, uuid))
+
+    return { ...selectedUser[0], subscriptions: selectedSubs }
+}
