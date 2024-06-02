@@ -10,7 +10,6 @@ export const newSubscriptionSchema = z.object({
     upcomingPaymentDate: z.coerce.date().min(new Date()),
     currencyId: z.string(),
     renewalAmount: z.coerce.string(),
-    paymentCount: z.number(),
     totalCost: z.coerce.string(),
 })
 
