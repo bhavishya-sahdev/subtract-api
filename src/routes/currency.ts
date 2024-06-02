@@ -19,7 +19,7 @@ currency.get("/", async (c) => {
 //         name: z.string(),
 //         symbolNative: z.string(),
 //         decimalDigits: z.number(),
-//         rounding: z.string(),
+//         rounding: z.coerce.string(),
 //         code: z.string(),
 //         namePlural: z.string(),
 //     })
@@ -28,7 +28,7 @@ currency.get("/", async (c) => {
 // currency.post("/", async (c) => {
 //     const data = await c.req.json()
 //     const validatedInput = newCurrencySchema.safeParse(data)
-//     if (!validatedInput.data) return c.status(400)
+//     if (!validatedInput.data) return c.json(validatedInput.error, 400)
 //     try {
 //         await insertCurrency(validatedInput.data)
 //         return c.json({ data: "success", error: null })
