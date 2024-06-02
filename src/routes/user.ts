@@ -1,6 +1,10 @@
 import { findPaymentsByOwnerId } from "db/schema/payment"
 import { findSubscriptionsByOwnerId } from "db/schema/subscription"
-import { findUserByUuid, updateUser } from "db/schema/user"
+import {
+    findUserByUuid,
+    findUserByUuidWithSubscriptions,
+    updateUser,
+} from "db/schema/user"
 import { Hono } from "hono"
 import {
     verifyAndDecodeTokenFromCookie,
@@ -36,10 +40,10 @@ user.get("/subscriptions", async (c) => {
     }
 
     try {
-        const subscriptions = await findSubscriptionsByOwnerId(
+        const userWithSubscriptions = await findUserByUuidWithSubscriptions(
             payload.data.userId
         )
-        return c.json({ data: subscriptions, error: null })
+        return c.json({ data: userWithSubscriptions, error: null })
     } catch (err: any) {
         return c.json({ error: err.message, data: null }, 500)
     }
