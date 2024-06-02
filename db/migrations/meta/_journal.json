@@ -71,6 +71,13 @@
       "when": 1717140415779,
       "tag": "0009_superb_sphinx",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1717322277920,
+      "tag": "0010_fancy_jackpot",
+      "breakpoints": true
     }
   ]
 }
