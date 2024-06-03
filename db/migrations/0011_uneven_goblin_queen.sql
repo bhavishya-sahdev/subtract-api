@@ -1,0 +1,1 @@
+ALTER TABLE "subscription" ALTER COLUMN "total_cost" SET DEFAULT '0';
