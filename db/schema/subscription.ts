@@ -10,7 +10,7 @@ import {
 import { OmitDefaultsFromType } from "lib/utils"
 import { user } from "./user"
 import { sharedColumns } from "./shared"
-import { and, eq, relations } from "drizzle-orm"
+import { and, eq, relations, sql } from "drizzle-orm"
 import { db } from "db/connect"
 import { payment } from "./payment"
 import { currency } from "./currency"
@@ -41,7 +41,7 @@ export const subscription = pgTable("subscription", {
         .references(() => currency.uuid)
         .notNull(),
     renewalAmount: numeric("renewal_amount").notNull(),
-    totalCost: numeric("total_cost"),
+    totalCost: numeric("total_cost").default("0"),
     ownerId: uuid("owner_id")
         .references(() => user.uuid, { onDelete: "cascade" })
         .notNull(),
@@ -81,7 +81,6 @@ export const insertSubscription = async (
             ...item,
             ownerId: userId,
             upcomingPaymentDate: new Date(),
-            totalCost: "0",
         })
     )
 
@@ -164,4 +163,68 @@ export const insertSubscriptionWithPayments = async (
     })
 
     return res
+}
+
+export const getSubscriptionStatsByTimeFrame = async (
+    ownerId: string,
+    period: "month" | "year" = "month"
+) => {
+    const interval = period === "month" ? "1 month" : "1 year"
+    const res = await db.execute(sql`
+        WITH periods AS (
+            SELECT date_trunc(${period}, generate_series(
+                (SELECT date_trunc(${period}, MIN(created_date)) FROM subscription WHERE owner_id = ${ownerId}),
+                (SELECT date_trunc(${period}, MAX(created_date)) FROM subscription WHERE owner_id = ${ownerId}),
+                ${interval}::interval
+            )) AS period
+        )
+        SELECT
+            periods.period,
+            COALESCE(subscription.subscription_count, 0) AS subscription_count
+        FROM
+            periods
+        LEFT JOIN (
+            SELECT
+                DATE_TRUNC(${period}, created_date) AS period,
+                COUNT(*) AS subscription_count
+            FROM
+                subscription
+            WHERE
+                owner_id = ${ownerId}
+            GROUP BY
+                period
+        ) AS subscription ON periods.period = subscription.period
+        ORDER BY
+            periods.period DESC;
+    `)
+
+    return res.rows
+}
+
+// return subscriptions with no payments
+
+export const getSubscriptionsWithNoPayments = async (ownerId: string) => {
+    return await db.execute(sql`
+        SELECT
+            subscription.uuid,
+            subscription.service_name,
+            subscription.created_date,
+            subscription.renewal_period_enum,
+            subscription.renewal_period_days,
+            subscription.upcoming_payment_date,
+            subscription.currency_id,
+            subscription.renewal_amount,
+            subscription.total_cost,
+            subscription.owner_id,
+            subscription.payment_count
+        FROM
+            subscription
+        LEFT JOIN payment ON subscription.uuid = payment.subscription_id
+        WHERE
+            subscription.owner_id = ${ownerId}
+        GROUP BY
+            subscription.uuid
+        HAVING
+            COUNT(payment.uuid) = 0;
+    `)
 }
