@@ -8,6 +8,7 @@ import { logger } from "hono/logger"
 import { showRoutes } from "hono/dev"
 import { currency } from "./routes/currency"
 import { prefab } from "./routes/prefab"
+import { ai } from "./routes/ai"
 
 const app = new Hono()
 
@@ -31,6 +32,7 @@ app.route("/subscription", subscription)
 app.route("/payment", payment)
 app.route("/currency", currency)
 app.route("/prefab", prefab)
+app.route("/ai", ai)
 
 if (isDevelopment) showRoutes(app)
 
