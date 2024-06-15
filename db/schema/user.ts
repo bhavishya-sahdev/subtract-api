@@ -75,6 +75,7 @@ export const findUserByUuidWithSubscriptions = async (uuid: string) => {
             createdAt: user.createdAt,
             isOnboardingComplete: user.isOnboardingComplete,
             subscriptionCount: user.subscriptionCount,
+            paymentCount: user.paymentCount,
         })
         .from(user)
         .where(eq(user.uuid, uuid))
@@ -85,4 +86,10 @@ export const findUserByUuidWithSubscriptions = async (uuid: string) => {
         .where(eq(subscription.ownerId, uuid))
 
     return { ...selectedUser[0], subscriptions: selectedSubs }
+}
+
+// return members with no subscriptions
+
+export const findMembersWithNoSubscriptions = async () => {
+    return db.select().from(user).where(eq(user.subscriptionCount, 0))
 }
