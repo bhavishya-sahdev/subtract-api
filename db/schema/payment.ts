@@ -9,7 +9,7 @@ import {
 import { sharedColumns } from "./shared"
 import { subscription } from "./subscription"
 import { OmitDefaultsFromType } from "lib/utils"
-import { and, eq, relations } from "drizzle-orm"
+import { and, eq, relations, sql } from "drizzle-orm"
 import { db } from "db/connect"
 import { user } from "./user"
 import { currency } from "./currency"
@@ -106,4 +106,53 @@ export const deletePaymentByUuid = async (uuid: string, ownerId: string) => {
         .delete(payment)
         .where(and(eq(payment.uuid, uuid), eq(payment.ownerId, ownerId)))
         .returning({ deletePaymentId: payment.uuid })
+}
+
+export const getPaymentStatsByTimeFrame = async (
+    ownerId: string,
+    period: "month" | "year" = "month"
+) => {
+    const interval = period === "month" ? "1 month" : "1 year"
+    const res = await db.execute(sql`
+        WITH periods AS (
+            SELECT date_trunc(${period}, generate_series(
+                (SELECT date_trunc(${period}, MIN(date)) FROM payment WHERE owner_id = ${ownerId}),
+                (SELECT date_trunc(${period}, MAX(date)) FROM payment WHERE owner_id = ${ownerId}),
+                ${interval}::interval
+            )) AS period
+        )
+        SELECT
+            periods.period,
+            COALESCE(payment.payment_count, 0) AS payment_count,
+            COALESCE(payment.total_amount, 0) AS total_amount
+        FROM
+            periods
+        LEFT JOIN (
+            SELECT
+                DATE_TRUNC(${period}, date) AS period,
+                COUNT(*) AS payment_count,
+                SUM(amount) AS total_amount
+            FROM
+                payment
+            WHERE
+                owner_id = ${ownerId}
+            GROUP BY
+                period
+        ) AS payment ON periods.period = payment.period
+        ORDER BY
+            periods.period DESC;
+    `)
+
+    return res.rows
+}
+
+export const getUpcomingPayments = async (ownerId: string) => {
+    const res = await db.execute(sql`
+        SELECT *
+        FROM payment
+        WHERE owner_id = ${ownerId} AND date >= CURRENT_DATE AND date < CURRENT_DATE + INTERVAL '2 weeks' AND payment_status_enum != 'paid'
+        ORDER BY date;
+    `)
+
+    return res.rows
 }
