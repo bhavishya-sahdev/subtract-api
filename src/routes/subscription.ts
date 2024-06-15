@@ -1,7 +1,7 @@
-import { validPaymentStatusValues } from "db/schema/payment"
 import {
     deleteSubscriptionByUuid,
     findSubscriptionByUuid,
+    getSubscriptionStatsByTimeFrame,
     insertSubscription,
     insertSubscriptionWithPayments,
     updateSubscriptionByUuid,
@@ -16,30 +16,6 @@ import {
 import { z } from "zod"
 
 export const subscription = new Hono()
-
-/**
- * Get subscription by uuid
- */
-subscription.get("/:uuid", async (c) => {
-    const payload = verifyAndDecodeTokenFromHeader(c)
-    if (payload.error) {
-        return c.json(
-            { data: null, error: payload.error.message },
-            payload.error.status
-        )
-    }
-
-    const { uuid: subscriptionId } = c.req.param()
-    try {
-        const subscriptions = await findSubscriptionByUuid(
-            subscriptionId,
-            payload.data.userId
-        )
-        return c.json({ data: subscriptions, error: null })
-    } catch (err: any) {
-        return c.json({ error: err.message, data: null }, 500)
-    }
-})
 
 // const newSubscriptionSchema = z.object({
 //     name: z.string(),
@@ -163,7 +139,7 @@ subscription.post("/payments", async (c) => {
         .safeParse(data)
 
     if (!validatedInput.success) {
-        return c.json({ error: validatedInput.error, data: null }, 400)
+        return c.json({ error: validatedInput.error.errors, data: null }, 400)
     }
 
     try {
@@ -175,5 +151,53 @@ subscription.post("/payments", async (c) => {
         return c.json({ data: insertedSubscription, error: null })
     } catch (err: any) {
         return c.json({ error: err, data: null }, 500)
+    }
+})
+
+subscription.get("/by-timeframe", async (c) => {
+    const payload = verifyAndDecodeTokenFromCookie(c)
+    const { period } = c.req.query()
+    if (payload.error) {
+        return c.json(
+            { data: null, error: payload.error.message },
+            payload.error.status
+        )
+    }
+
+    try {
+        const subscriptions = await getSubscriptionStatsByTimeFrame(
+            payload.data.userId,
+            period === "year" ? "year" : "month"
+        )
+        return c.json({ data: subscriptions, error: null })
+    } catch (err: any) {
+        return c.json({ error: err.message, data: null }, 500)
+    }
+})
+
+/**
+ * Get subscription by uuid
+ * this uses a route parameter to get the payment by uuid
+ * so registering it after the other routes
+ *
+ */
+subscription.get("/:uuid", async (c) => {
+    const payload = verifyAndDecodeTokenFromHeader(c)
+    if (payload.error) {
+        return c.json(
+            { data: null, error: payload.error.message },
+            payload.error.status
+        )
+    }
+
+    const { uuid: subscriptionId } = c.req.param()
+    try {
+        const subscriptions = await findSubscriptionByUuid(
+            subscriptionId,
+            payload.data.userId
+        )
+        return c.json({ data: subscriptions, error: null })
+    } catch (err: any) {
+        return c.json({ error: err.message, data: null }, 500)
     }
 })
