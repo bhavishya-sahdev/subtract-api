@@ -1,22 +1,23 @@
 {
-    "scripts": {
-        "dev": "bun run --hot src/index.ts"
-    },
-    "module": "es2022",
-    "dependencies": {
-        "@neondatabase/serverless": "^0.9.1",
-        "@types/bcrypt": "^5.0.2",
-        "@types/jsonwebtoken": "^9.0.6",
-        "bcrypt": "^5.1.1",
-        "date-fns": "^3.6.0",
-        "drizzle-orm": "^0.30.10",
-        "drizzle-zod": "^0.5.1",
-        "hono": "^4.3.2",
-        "jsonwebtoken": "^9.0.2",
-        "pg": "^8.11.5"
-    },
-    "devDependencies": {
-        "@types/bun": "latest",
-        "drizzle-kit": "latest"
-    }
+  "scripts": {
+    "dev": "bun run --hot src/index.ts"
+  },
+  "module": "es2022",
+  "dependencies": {
+    "@neondatabase/serverless": "^0.9.1",
+    "@types/bcrypt": "^5.0.2",
+    "@types/jsonwebtoken": "^9.0.6",
+    "bcrypt": "^5.1.1",
+    "date-fns": "^3.6.0",
+    "drizzle-orm": "^0.30.10",
+    "drizzle-zod": "^0.5.1",
+    "groq-sdk": "^0.4.0",
+    "hono": "^4.3.2",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.11.5"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "drizzle-kit": "latest"
+  }
 }
