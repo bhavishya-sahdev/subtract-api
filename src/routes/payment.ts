@@ -1,6 +1,8 @@
 import {
     deletePaymentByUuid,
     findPaymentByUuid,
+    getPaymentStatsByTimeFrame,
+    getUpcomingPayments,
     insertPayment,
     updatePaymentByUuid,
     validPaymentStatusValues,
@@ -8,31 +10,13 @@ import {
 
 import { Hono } from "hono"
 import { newPaymentSchema } from "lib/types"
-import { verifyAndDecodeTokenFromHeader } from "lib/utils"
+import {
+    verifyAndDecodeTokenFromCookie,
+    verifyAndDecodeTokenFromHeader,
+} from "lib/utils"
 import { z } from "zod"
 
 export const payment = new Hono()
-
-/**
- * Get payment by uuid
- */
-payment.get("/:uuid", async (c) => {
-    const payload = verifyAndDecodeTokenFromHeader(c)
-    if (payload.error) {
-        return c.json(
-            { data: null, error: payload.error.message },
-            payload.error.status
-        )
-    }
-
-    const { uuid: paymentId } = c.req.param()
-    try {
-        const payment = await findPaymentByUuid(paymentId, payload.data.userId)
-        return c.json({ data: payment, error: null })
-    } catch (err: any) {
-        return c.json({ error: err.message, data: null }, 500)
-    }
-})
 
 /**
  * Create payment
@@ -126,6 +110,72 @@ payment.post("/:uuid/delete", async (c) => {
             payload.data.userId
         )
         return c.json({ data: deletedPayment[0], error: null })
+    } catch (err: any) {
+        return c.json({ error: err.message, data: null }, 500)
+    }
+})
+
+// get upcoming payments
+payment.get("/upcoming", async (c) => {
+    const payload = verifyAndDecodeTokenFromCookie(c)
+    if (payload.error) {
+        return c.json(
+            { data: null, error: payload.error.message },
+            payload.error.status
+        )
+    }
+
+    try {
+        const upcomingPayments = await getUpcomingPayments(payload.data.userId)
+        return c.json({ data: upcomingPayments, error: null })
+    } catch (err: any) {
+        return c.json({ error: err.message, data: null }, 500)
+    }
+})
+
+/**
+ * Get payments by timeframe
+ */
+payment.get("/by-timeframe", async (c) => {
+    const payload = verifyAndDecodeTokenFromCookie(c)
+    const { period } = c.req.query()
+    if (payload.error) {
+        return c.json(
+            { data: null, error: payload.error.message },
+            payload.error.status
+        )
+    }
+
+    try {
+        const paymentStats = await getPaymentStatsByTimeFrame(
+            payload.data.userId,
+            period === "year" ? "year" : "month"
+        )
+        return c.json({ data: paymentStats, error: null })
+    } catch (err: any) {
+        return c.json({ error: err.message, data: null }, 500)
+    }
+})
+
+/**
+ * Get payment by uuid
+ * this uses a route parameter to get the payment by uuid
+ * so registering it after the other routes
+ *
+ */
+payment.get("/:uuid", async (c) => {
+    const payload = verifyAndDecodeTokenFromHeader(c)
+    if (payload.error) {
+        return c.json(
+            { data: null, error: payload.error.message },
+            payload.error.status
+        )
+    }
+
+    const { uuid: paymentId } = c.req.param()
+    try {
+        const payment = await findPaymentByUuid(paymentId, payload.data.userId)
+        return c.json({ data: payment, error: null })
     } catch (err: any) {
         return c.json({ error: err.message, data: null }, 500)
     }
