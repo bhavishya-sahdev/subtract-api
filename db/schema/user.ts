@@ -15,6 +15,12 @@ export const user = pgTable("user", {
     subscriptionCount: integer("subscription_count").default(0),
     paymentCount: integer("payment_count").default(0),
     isOnboardingComplete: boolean("is_onboarding_complete").default(false),
+
+    isGoogleUser: boolean("is_google_user").default(false),
+    googleId: varchar("google_id").unique(),
+    googleAccessToken: varchar("google_access_token"),
+    googleRefreshToken: varchar("google_refresh_token"),
+    googleTokenExpiresAt: varchar("google_token_expires_at"),
 })
 
 export const userRelations = relations(user, ({ many }) => ({
@@ -45,7 +51,11 @@ export const updateUser = async (uuid: string, updatedColumns: UpdateUser) => {
 
 export const findUserByEmail = async (email: string) => {
     return db
-        .select({ hashedPassword: user.hashedPassword, uuid: user.uuid })
+        .select({
+            hashedPassword: user.hashedPassword,
+            uuid: user.uuid,
+            isGoogleUser: user.isGoogleUser,
+        })
         .from(user)
         .where(eq(user.email, email))
 }
