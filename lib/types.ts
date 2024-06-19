@@ -17,7 +17,7 @@ export const newPaymentSchema = z.object({
     currencyId: z.string(),
     amount: z.coerce.string(),
     paymentMethod: z.string().optional(),
-    paymentStatus: z.enum(validPaymentStatusValues).optional(),
+    paymentStatusEnum: z.enum(validPaymentStatusValues),
 })
 
 export type TNewSubscription = z.infer<typeof newSubscriptionSchema>
