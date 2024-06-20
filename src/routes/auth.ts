@@ -6,7 +6,7 @@ import { z } from "zod"
 import { setCookie } from "hono/cookie"
 import { addHours } from "date-fns"
 import { authClient } from "lib/google"
-import axios from "axios"
+import { google } from "googleapis"
 
 export const auth = new Hono()
 
@@ -117,10 +117,17 @@ auth.post("/signin", async (c) => {
     }
 })
 
+/**
+ * This route is used to exchange the auth code received from Google OAuth
+ * for an access token and refresh token.
+ * If a user exists, we update the user's Google tokens.
+ * If a user does not exist, we create a new user.
+ */
 auth.post("/google", async (c) => {
     const { code } = await c.req.json()
 
     try {
+        // exchange auth-code for tokens
         const { tokens } = await authClient.getToken(code)
 
         if (
@@ -132,24 +139,30 @@ auth.post("/google", async (c) => {
 
         authClient.setCredentials(tokens)
 
-        const userInfoResponse = await axios.get(
-            "https://www.googleapis.com/oauth2/v2/userinfo",
-            {
-                headers: {
-                    Authorization: `Bearer ${tokens.access_token}`,
-                },
-            }
-        )
+        // get user info
+        const userInfoResponse = await google
+            .oauth2({ version: "v2", auth: authClient })
+            .userinfo.get()
 
         const userInfo = userInfoResponse.data
 
+        if (!userInfo.email || !userInfo.id)
+            return c.json({ error: "Invalid Google response", data: null }, 500)
+
         const foundUser = await findUserByEmail(userInfo.email)
 
+        // if user exists, update google tokens
         if (foundUser.length > 0) {
             if (!foundUser[0].isGoogleUser) {
                 updateUser(foundUser[0].uuid, {
                     isGoogleUser: true,
                     googleId: userInfo.id,
+                    googleAccessToken: tokens.access_token,
+                    googleRefreshToken: tokens.refresh_token,
+                    googleTokenExpiresAt: tokens.expiry_date.toString(),
+                })
+            } else {
+                updateUser(foundUser[0].uuid, {
                     googleAccessToken: tokens.access_token,
                     googleRefreshToken: tokens.refresh_token,
                     googleTokenExpiresAt: tokens.expiry_date.toString(),
@@ -168,9 +181,9 @@ auth.post("/google", async (c) => {
             return c.json({ data: { token }, error: null })
         }
 
-        // insert new user
+        // if user does not exist, create user
         const newUser = await insertUser({
-            name: userInfo.name,
+            name: userInfo.given_name || userInfo.email.split("@")[0],
             email: userInfo.email,
             hashedPassword: "",
             isGoogleUser: true,
