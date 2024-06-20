@@ -17,28 +17,33 @@ current_payment_date: date string of when this payment took place
 and if it's not a subscription then just return {isSubscription: false}
 `
 
-export const getEmailData = async (email: string) => {
-    let cleanedEmail = email.replace(/<style([\s\S]*?)<\/style>/gi, "")
-    cleanedEmail = cleanedEmail.replace(/<script([\s\S]*?)<\/script>/gi, "")
-    cleanedEmail = email.replace(/<[^>]*>/g, "").replace(/\n/g, "")
-    cleanedEmail = cleanedEmail.replace(/\s+/g, " ").trim()
-
-    const chat_completion = await groq.chat.completions.create({
-        messages: [
-            {
-                role: "system",
-                content: SYSTEM_PROMPT,
-            },
-            {
-                role: "user",
-                content: email,
-            },
-        ],
-        model: "llama3-8b-8192",
-        temperature: 0,
-        stream: false,
-        response_format: { type: "json_object" },
+export const extractEmailData = async (
+    emails: { body: string; subject: string; labels: string[] }[]
+) => {
+    const chatCompletionPromises = emails.map((email) => {
+        return groq.chat.completions.create({
+            messages: [
+                {
+                    role: "system",
+                    content: SYSTEM_PROMPT,
+                },
+                {
+                    role: "user",
+                    content: `subject: ${
+                        email.subject
+                    }; labels: ${email.labels.join(", ")}; body: ${
+                        email.body
+                    };`,
+                },
+            ],
+            model: "llama3-8b-8192",
+            temperature: 0,
+            stream: false,
+            response_format: { type: "json_object" },
+        })
     })
 
-    return chat_completion
+    const chatCompletions = await Promise.all(chatCompletionPromises)
+
+    return chatCompletions
 }
