@@ -60,7 +60,10 @@ export const findUserByEmail = async (email: string) => {
         .where(eq(user.email, email))
 }
 
-export const findUserByUuid = async (uuid: string) => {
+export const findUserByUuid = async (
+    uuid: string,
+    returnGoogleTokens: boolean = false
+) => {
     return db
         .select({
             uuid: user.uuid,
@@ -70,6 +73,13 @@ export const findUserByUuid = async (uuid: string) => {
             createdAt: user.createdAt,
             isOnboardingComplete: user.isOnboardingComplete,
             subscriptionCount: user.subscriptionCount,
+            isGoogleUser: user.isGoogleUser,
+            googleId: user.googleId,
+            ...(returnGoogleTokens && {
+                googleAccessToken: user.googleAccessToken,
+                googleRefreshToken: user.googleRefreshToken,
+                googleTokenExpiresAt: user.googleTokenExpiresAt,
+            }),
         })
         .from(user)
         .where(eq(user.uuid, uuid))
