@@ -95,6 +95,7 @@ export const findUserByUuidWithSubscriptions = async (uuid: string) => {
             createdAt: user.createdAt,
             isOnboardingComplete: user.isOnboardingComplete,
             subscriptionCount: user.subscriptionCount,
+            isGoogleUser: user.isGoogleUser,
             paymentCount: user.paymentCount,
         })
         .from(user)
