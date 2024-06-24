@@ -26,8 +26,16 @@ export const newUserSchema = z.object({
 })
 
 auth.post("/signup", async (c) => {
-    const { name, email, password } = await c.req.json()
-    const validatedInput = newUserSchema.safeParse({ name, email, password })
+    const { name, email, password } = await c.req.json<{
+        name: string
+        email: string
+        password: string
+    }>()
+    const validatedInput = newUserSchema.safeParse({
+        name: name.toLowerCase(),
+        email: email.toLowerCase(),
+        password,
+    })
     if (!validatedInput.success) {
         return c.json(
             { error: validatedInput.error.flatten().fieldErrors, data: null },
@@ -35,16 +43,20 @@ auth.post("/signup", async (c) => {
         )
     }
 
-    const hashedPassword = await hash(password, 10)
+    const hashedPassword = await hash(validatedInput.data.password, 10)
 
     try {
-        const existingUser = await findUserByEmail(email)
+        const existingUser = await findUserByEmail(validatedInput.data.email)
         if (existingUser.length > 0)
             return c.json(
                 { error: { email: ["Email already in use"] }, data: null },
                 400
             )
-        const newUser = await insertUser({ name, email, hashedPassword })
+        const newUser = await insertUser({
+            name: validatedInput.data.name,
+            email: validatedInput.data.email,
+            hashedPassword,
+        })
         const token = generateToken({ userId: newUser[0].insertedUserId })
         setCookie(c, "token", token, {
             secure: process.env.NODE_ENV === "development" ? false : true,
@@ -65,8 +77,14 @@ export const loginUserSchema = z.object({
 })
 
 auth.post("/signin", async (c) => {
-    const { email, password } = await c.req.json()
-    const validatedInput = loginUserSchema.safeParse({ email, password })
+    const { email, password } = await c.req.json<{
+        email: string
+        password: string
+    }>()
+    const validatedInput = loginUserSchema.safeParse({
+        email: email.toLowerCase(),
+        password,
+    })
     if (!validatedInput.success) {
         return c.json(
             { error: validatedInput.error.flatten().fieldErrors, data: null },
@@ -75,7 +93,7 @@ auth.post("/signin", async (c) => {
     }
 
     try {
-        const foundUser = await findUserByEmail(email)
+        const foundUser = await findUserByEmail(validatedInput.data.email)
 
         if (!foundUser) {
             return c.json(
@@ -84,7 +102,7 @@ auth.post("/signin", async (c) => {
             )
         }
 
-        if (foundUser[0].isGoogleUser) {
+        if (foundUser[0].isGoogleUser && foundUser[0].hashedPassword === "") {
             return c.json(
                 { error: "Please sign in using Google", data: null },
                 401
@@ -92,7 +110,7 @@ auth.post("/signin", async (c) => {
         }
 
         const isValidPassword = await compare(
-            password,
+            validatedInput.data.password,
             foundUser[0].hashedPassword
         )
 
@@ -108,7 +126,7 @@ auth.post("/signin", async (c) => {
             secure: process.env.NODE_ENV === "development" ? false : true,
             httpOnly: true,
             domain: "localhost",
-            sameSite: "Lax",
+            sameSite: "None",
             expires: addHours(new Date(), 1),
         })
         return c.json({ data: { token }, error: null })
