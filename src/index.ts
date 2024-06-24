@@ -11,15 +11,20 @@ import { prefab } from "./routes/prefab"
 
 const app = new Hono()
 
-const isDevelopment = process.env.NODE_ENV === "development"
 app.use(
     cors({
-        origin: "http://localhost:5173",
+        origin: [
+            "http://localhost:5173",
+            "https://getsubtract.xyz",
+            "https://www.getsubtract.xyz",
+            "https://subtract-ihscurdhw-bhavishyas-projects-10b4b289.vercel.app",
+            "http://subtract-ihscurdhw-bhavishyas-projects-10b4b289.vercel.app",
+        ],
         credentials: true,
     })
 )
 
-app.use(logger())
+// app.use(logger())
 app.get("/", (c) => {
     return c.json({ data: "res" })
 })
@@ -31,7 +36,5 @@ app.route("/subscription", subscription)
 app.route("/payment", payment)
 app.route("/currency", currency)
 app.route("/prefab", prefab)
-
-if (isDevelopment) showRoutes(app)
 
 export default app
