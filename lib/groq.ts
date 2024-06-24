@@ -3,7 +3,8 @@ import Groq from "groq-sdk"
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
 
 const SYSTEM_PROMPT = `
-You classify emails and extract required information in JSON. If the email is related to a subscription service payment or notification then the schema should look like: 
+You classify emails and extract required information in JSON. 
+If the email is related to a subscription service payment or notification then the schema should look like: 
 {isSubscription: true, 
 data: {
 renewal_amount: number,
@@ -45,5 +46,7 @@ export const extractEmailData = async (
 
     const chatCompletions = await Promise.all(chatCompletionPromises)
 
-    return chatCompletions
+    return chatCompletions.map((completion) => {
+        return JSON.parse(completion.choices[0].message.content || "{}")
+    })
 }
