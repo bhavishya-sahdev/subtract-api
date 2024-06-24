@@ -1,7 +1,8 @@
 {
     "scripts": {
         "dev": "bun run --hot src/index.ts",
-        "start": "bun run src/index.ts"
+        "start": "bun run dist/index.js",
+        "build": "bun build ./src/index.ts --outdir ./dist --target bun"
     },
     "module": "es2022",
     "dependencies": {
@@ -9,7 +10,7 @@
         "@types/bcrypt": "^5.0.2",
         "@types/jsonwebtoken": "^9.0.6",
         "axios": "^1.7.2",
-        "bcrypt": "^5.1.1",
+        "bun": "^1.1.16",
         "date-fns": "^3.6.0",
         "drizzle-orm": "^0.30.10",
         "drizzle-zod": "^0.5.1",
