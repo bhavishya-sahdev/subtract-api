@@ -9,17 +9,15 @@ import { google } from "googleapis"
 import { Hono } from "hono"
 import { authClient } from "lib/google"
 import { extractEmailData } from "lib/groq"
-import {
-    verifyAndDecodeTokenFromCookie,
-    verifyAndDecodeTokenFromHeader,
-} from "lib/utils"
+import { cleanEmails, verifyAndDecodeTokenFromCookie } from "lib/utils"
 export const user = new Hono()
 
 /**
  * Get user details
  */
 user.get("/", async (c) => {
-    const payload = verifyAndDecodeTokenFromHeader(c)
+    const payload = verifyAndDecodeTokenFromCookie(c)
+    console.log(payload)
     if (payload.error) {
         return c.json(
             { data: null, error: payload.error.message },
@@ -34,7 +32,7 @@ user.get("/", async (c) => {
  * Get all subscriptions by user
  */
 user.get("/subscriptions", async (c) => {
-    const payload = verifyAndDecodeTokenFromHeader(c)
+    const payload = verifyAndDecodeTokenFromCookie(c)
     if (payload.error) {
         return c.json(
             { data: null, error: payload.error.message },
@@ -56,7 +54,7 @@ user.get("/subscriptions", async (c) => {
  * Get all payments by user
  */
 user.get("/payments", async (c) => {
-    const payload = verifyAndDecodeTokenFromHeader(c)
+    const payload = verifyAndDecodeTokenFromCookie(c)
     if (payload.error) {
         return c.json(
             { data: null, error: payload.error.message },
@@ -117,13 +115,49 @@ user.get("/google/access", async (c) => {
                     500
                 )
 
-            // check if scope gmail read is present
-            // if not present, return error
             authClient.setCredentials({
                 access_token: user.googleAccessToken,
                 refresh_token: user.googleRefreshToken,
                 expiry_date: parseInt(user.googleTokenExpiresAt),
             })
+
+            if (new Date() > new Date(parseInt(user.googleTokenExpiresAt))) {
+                try {
+                    const { credentials } =
+                        await authClient.refreshAccessToken()
+                    if (
+                        !credentials.expiry_date ||
+                        !credentials.access_token ||
+                        !credentials.refresh_token
+                    )
+                        return c.json(
+                            {
+                                error: "Failed to refresh access token",
+                                data: null,
+                            },
+                            500
+                        )
+                    // Save the new tokens in the database
+                    await updateUser(user.uuid, {
+                        googleAccessToken: credentials.access_token,
+                        googleRefreshToken: credentials.refresh_token,
+                        googleTokenExpiresAt:
+                            credentials.expiry_date.toString(),
+                    })
+
+                    // Update authClient with new access token
+                    authClient.setCredentials({
+                        access_token: credentials.access_token,
+                        refresh_token: credentials.refresh_token,
+                        expiry_date: credentials.expiry_date,
+                    })
+                } catch (err) {
+                    return c.json(
+                        { error: "Failed to refresh access token", data: null },
+                        500
+                    )
+                }
+            }
 
             // get token info to check scopes granted
             const tokenInfo = await authClient.getTokenInfo(
@@ -162,6 +196,8 @@ user.get("/google/mails", async (c) => {
         )
     }
 
+    const { pageToken } = c.req.query()
+
     try {
         const [user] = await findUserByUuid(payload.data.userId, true)
         if (!user) {
@@ -190,6 +226,7 @@ user.get("/google/mails", async (c) => {
             const gmail = google.gmail({ version: "v1", auth: authClient })
             const mails = await gmail.users.messages.list({
                 userId: "me",
+                pageToken: pageToken,
             })
 
             const messagePromises = mails.data.messages?.map((message) =>
@@ -199,79 +236,24 @@ user.get("/google/mails", async (c) => {
                 })
             )
             // resolve all the promises and get the messages
-            const messages = await Promise.all(messagePromises || [])
+            const cleanedEmails = cleanEmails(
+                await Promise.all(messagePromises || [])
+            )
 
-            // clean up the emails
-            const cleanedEmails = messages
-                .filter((message) => message.data.payload !== undefined)
-                .map((message) => {
-                    // already filtered out undefined payloads
-                    if (!message.data.payload)
-                        return {
-                            body: "<IGNORE>",
-                            subject: "<IGNORE>",
-                            labels: message.data.labelIds || [],
-                        }
-
-                    if (
-                        message.data.payload.mimeType?.startsWith(
-                            "multipart"
-                        ) &&
-                        message.data.payload.parts
-                    ) {
-                        return {
-                            body:
-                                message.data.payload.parts?.find((part) =>
-                                    part.mimeType?.startsWith("text/")
-                                )?.body?.data || "<IGNORE>",
-                            subject:
-                                message.data.payload.headers?.find(
-                                    (header) => header.name === "Subject"
-                                )?.value || "<IGNORE>",
-                            labels: message.data.labelIds || [],
-                        }
-                    } else if (
-                        message.data.payload.mimeType?.startsWith("text/")
-                    ) {
-                        return {
-                            body: message.data.payload.body?.data || "<IGNORE>",
-                            subject:
-                                message.data.payload.headers?.find(
-                                    (header) => header.name === "Subject"
-                                )?.value || "<IGNORE>",
-                            labels: message.data.labelIds || [],
-                        }
-                    }
-                    return {
-                        body: "<IGNORE>",
-                        subject:
-                            message.data.payload.headers?.find(
-                                (header) => header.name === "Subject"
-                            )?.value || "<IGNORE>",
-                        labels: message.data.labelIds || [],
-                    }
-                })
-                .map((email) => {
-                    let body = Buffer.from(email.body, "base64").toString()
-                    body = body.replace(/<style([\s\S]*?)<\/style>/gi, "")
-                    body = body.replace(/<script([\s\S]*?)<\/script>/gi, "")
-                    body = body.replace(/<[^>]*>/g, "").replace(/\n/g, "")
-                    body = body.replace(/\s+/g, " ").trim()
-
-                    return {
-                        body,
-                        subject: email.subject,
-                        labels: email.labels,
-                    }
-                })
             // pass it to the AI model
             // extractEmailData(messages[0].data.payload.body.data)
-            const res = await extractEmailData(
-                cleanedEmails
-                    .filter((e) => e.body !== "<IGNORE>")
-                    .filter((_e, idx) => idx < 5)
-            )
-            return c.json({ data: res, error: null })
+            // const res = await extractEmailData(
+            //     cleanedEmails
+            //         .filter((e) => e.body !== "<IGNORE>")
+            //         .filter((_e, idx) => idx < 5)
+            // )
+            return c.json({
+                data: {
+                    messages: cleanedEmails,
+                    nextPageToken: mails.data.nextPageToken,
+                },
+                error: null,
+            })
         } else {
             return c.json(
                 {
@@ -281,6 +263,25 @@ user.get("/google/mails", async (c) => {
                 400
             )
         }
+    } catch (err: any) {
+        return c.json({ error: err.message, data: null }, 500)
+    }
+})
+
+user.post("/google/mails/extract", async (c) => {
+    const payload = verifyAndDecodeTokenFromCookie(c)
+    if (payload.error) {
+        return c.json(
+            { data: null, error: payload.error.message },
+            payload.error.status
+        )
+    }
+
+    const { messages } = await c.req.json()
+
+    try {
+        const res = await extractEmailData(messages)
+        return c.json({ data: res, error: null })
     } catch (err: any) {
         return c.json({ error: err.message, data: null }, 500)
     }
