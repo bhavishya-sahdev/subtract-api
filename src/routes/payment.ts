@@ -10,10 +10,7 @@ import {
 
 import { Hono } from "hono"
 import { newPaymentSchema } from "lib/types"
-import {
-    verifyAndDecodeTokenFromCookie,
-    verifyAndDecodeTokenFromHeader,
-} from "lib/utils"
+import { verifyAndDecodeTokenFromCookie } from "lib/utils"
 import { z } from "zod"
 
 export const payment = new Hono()
@@ -22,7 +19,7 @@ export const payment = new Hono()
  * Create payment
  */
 payment.post("/", async (c) => {
-    const payload = verifyAndDecodeTokenFromHeader(c)
+    const payload = verifyAndDecodeTokenFromCookie(c)
     if (payload.error) {
         return c.json(
             { data: null, error: payload.error.message },
@@ -64,7 +61,7 @@ const updatePaymentSchema = z.object({
  * Update payment
  */
 payment.post("/:uuid/update", async (c) => {
-    const payload = verifyAndDecodeTokenFromHeader(c)
+    const payload = verifyAndDecodeTokenFromCookie(c)
     if (payload.error) {
         return c.json(
             { data: null, error: payload.error.message },
@@ -96,7 +93,7 @@ payment.post("/:uuid/update", async (c) => {
  * Delete payment
  */
 payment.post("/:uuid/delete", async (c) => {
-    const payload = verifyAndDecodeTokenFromHeader(c)
+    const payload = verifyAndDecodeTokenFromCookie(c)
     if (payload.error) {
         return c.json(
             { data: null, error: payload.error.message },
@@ -164,7 +161,7 @@ payment.get("/by-timeframe", async (c) => {
  *
  */
 payment.get("/:uuid", async (c) => {
-    const payload = verifyAndDecodeTokenFromHeader(c)
+    const payload = verifyAndDecodeTokenFromCookie(c)
     if (payload.error) {
         return c.json(
             { data: null, error: payload.error.message },
