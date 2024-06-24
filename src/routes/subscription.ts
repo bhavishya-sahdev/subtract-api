@@ -9,10 +9,7 @@ import {
 } from "db/schema/subscription"
 import { Hono } from "hono"
 import { newPaymentSchema, newSubscriptionSchema } from "lib/types"
-import {
-    verifyAndDecodeTokenFromCookie,
-    verifyAndDecodeTokenFromHeader,
-} from "lib/utils"
+import { verifyAndDecodeTokenFromCookie } from "lib/utils"
 import { z } from "zod"
 
 export const subscription = new Hono()
@@ -70,7 +67,7 @@ const updateSubscriptionSchema = z.object({
  * Update subscription
  */
 subscription.post("/:uuid/update", async (c) => {
-    const payload = verifyAndDecodeTokenFromHeader(c)
+    const payload = verifyAndDecodeTokenFromCookie(c)
     if (payload.error) {
         return c.json(
             { data: null, error: payload.error.message },
@@ -102,7 +99,7 @@ subscription.post("/:uuid/update", async (c) => {
  * Delete subscription
  */
 subscription.post("/:uuid/delete", async (c) => {
-    const payload = verifyAndDecodeTokenFromHeader(c)
+    const payload = verifyAndDecodeTokenFromCookie(c)
     if (payload.error) {
         return c.json(
             { data: null, error: payload.error.message },
@@ -182,7 +179,7 @@ subscription.get("/by-timeframe", async (c) => {
  *
  */
 subscription.get("/:uuid", async (c) => {
-    const payload = verifyAndDecodeTokenFromHeader(c)
+    const payload = verifyAndDecodeTokenFromCookie(c)
     if (payload.error) {
         return c.json(
             { data: null, error: payload.error.message },
