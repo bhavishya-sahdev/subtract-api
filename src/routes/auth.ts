@@ -1,5 +1,4 @@
 import { Hono } from "hono"
-import { hash, compare } from "bcrypt"
 import { generateToken } from "lib/jwt"
 import { findUserByEmail, insertUser, updateUser } from "db/schema/user"
 import { z } from "zod"
@@ -7,6 +6,7 @@ import { setCookie } from "hono/cookie"
 import { addHours } from "date-fns"
 import { authClient } from "lib/google"
 import { google } from "googleapis"
+import { compare, hash } from "lib/cryptoUtils"
 
 export const auth = new Hono()
 
@@ -59,10 +59,10 @@ auth.post("/signup", async (c) => {
         })
         const token = generateToken({ userId: newUser[0].insertedUserId })
         setCookie(c, "token", token, {
-            secure: process.env.NODE_ENV === "development" ? false : true,
+            secure: true,
             httpOnly: true,
             domain: "localhost",
-            sameSite: "Lax",
+            sameSite: "None",
             expires: addHours(new Date(), 1),
         })
         return c.json({ data: { token }, error: null })
@@ -123,7 +123,7 @@ auth.post("/signin", async (c) => {
 
         const token = generateToken({ userId: foundUser[0].uuid })
         setCookie(c, "token", token, {
-            secure: process.env.NODE_ENV === "development" ? false : true,
+            secure: true,
             httpOnly: true,
             domain: "localhost",
             sameSite: "None",
@@ -214,10 +214,10 @@ auth.post("/google", async (c) => {
         // generate JWT token
         const token = generateToken({ userId: newUser[0].insertedUserId })
         setCookie(c, "token", token, {
-            secure: process.env.NODE_ENV === "development" ? false : true,
+            secure: true,
             httpOnly: true,
             domain: "localhost",
-            sameSite: "Lax",
+            sameSite: "None",
             expires: addHours(new Date(), 1),
         })
         return c.json({ data: { token }, error: null })
