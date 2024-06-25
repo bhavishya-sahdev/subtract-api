@@ -7,6 +7,18 @@
         "paths": {
             "db/*": ["./db/*"],
             "lib/*": ["./lib/*"]
-        }
-    }
+        },
+        "target": "es2022",
+        "module": "commonjs",
+        "declaration": true,
+        "moduleResolution": "Node",
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "types": ["node"],
+        "rootDir": ".",
+        "outDir": "./dist"
+    },
+    "include": ["src/**/*.ts", "test/**/*.ts"]
 }
