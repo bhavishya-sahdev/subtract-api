@@ -1,4 +1,3 @@
-import axios from "axios"
 import { findPaymentsByOwnerId } from "db/schema/payment"
 import {
     findUserByUuid,
