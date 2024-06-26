@@ -61,7 +61,7 @@ auth.post("/signup", async (c) => {
         setCookie(c, "token", token, {
             secure: true,
             httpOnly: true,
-            domain: c.req.header("host"),
+            domain: "getsubtract.xyz",
             sameSite: "None",
             expires: addHours(new Date(), 1),
         })
@@ -125,7 +125,7 @@ auth.post("/signin", async (c) => {
         setCookie(c, "token", token, {
             secure: true,
             httpOnly: true,
-            domain: c.req.header("host"),
+            domain: "getsubtract.xyz",
             sameSite: "None",
             expires: addHours(new Date(), 1),
         })
