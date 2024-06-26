@@ -239,13 +239,6 @@ user.get("/google/mails", async (c) => {
                 await Promise.all(messagePromises || [])
             )
 
-            // pass it to the AI model
-            // extractEmailData(messages[0].data.payload.body.data)
-            // const res = await extractEmailData(
-            //     cleanedEmails
-            //         .filter((e) => e.body !== "<IGNORE>")
-            //         .filter((_e, idx) => idx < 5)
-            // )
             return c.json({
                 data: {
                     messages: cleanedEmails,
