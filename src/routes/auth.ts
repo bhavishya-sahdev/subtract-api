@@ -61,10 +61,7 @@ auth.post("/signup", async (c) => {
         setCookie(c, "token", token, {
             secure: true,
             httpOnly: true,
-            domain:
-                process.env.NODE_ENV === "development"
-                    ? "localhost"
-                    : c.req.header("host"),
+            domain: c.req.header("host"),
             sameSite: "None",
             expires: addHours(new Date(), 1),
         })
@@ -128,10 +125,7 @@ auth.post("/signin", async (c) => {
         setCookie(c, "token", token, {
             secure: true,
             httpOnly: true,
-            domain:
-                process.env.NODE_ENV === "development"
-                    ? "localhost"
-                    : c.req.header("host"),
+            domain: c.req.header("host"),
             sameSite: "None",
             expires: addHours(new Date(), 1),
         })
