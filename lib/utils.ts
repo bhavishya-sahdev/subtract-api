@@ -71,6 +71,7 @@ export const cleanEmails = (
             // already filtered out undefined payloads
             if (!message.data.payload)
                 return {
+                    sender: "<IGNORE>",
                     body: "<IGNORE>",
                     subject: "<IGNORE>",
                     labels: message.data.labelIds || [],
@@ -81,6 +82,9 @@ export const cleanEmails = (
                 message.data.payload.parts
             ) {
                 return {
+                    sender: message.data.payload.headers?.find(
+                        (header) => header.name === "From"
+                    )?.value,
                     body:
                         message.data.payload.parts?.find((part) =>
                             part.mimeType?.startsWith("text/")
@@ -93,6 +97,9 @@ export const cleanEmails = (
                 }
             } else if (message.data.payload.mimeType?.startsWith("text/")) {
                 return {
+                    sender: message.data.payload.headers?.find(
+                        (header) => header.name === "From"
+                    )?.value,
                     body: message.data.payload.body?.data || "<IGNORE>",
                     subject:
                         message.data.payload.headers?.find(
@@ -102,6 +109,9 @@ export const cleanEmails = (
                 }
             }
             return {
+                sender: message.data.payload.headers?.find(
+                    (header) => header.name === "From"
+                )?.value,
                 body: "<IGNORE>",
                 subject:
                     message.data.payload.headers?.find(
@@ -119,6 +129,7 @@ export const cleanEmails = (
             body = body.replace(/http(s)?:\/\/\S+/g, "")
 
             return {
+                sender: email.sender,
                 body,
                 subject: email.subject,
                 labels: email.labels,
