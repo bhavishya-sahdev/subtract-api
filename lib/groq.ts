@@ -42,34 +42,40 @@ Analyze all provided emails and extract the relevant information according to th
 `
 
 export const extractEmailData = async (
-    emails: { body: string; subject: string; labels: string[] }[]
+    emails: {
+        body: string
+        subject: string
+        labels: string[]
+        sender: string
+        date: string
+    }[]
 ) => {
-    const chatCompletionPromises = emails.map((email) => {
-        return groq.chat.completions.create({
-            messages: [
-                {
-                    role: "system",
-                    content: SYSTEM_PROMPT,
-                },
-                {
-                    role: "user",
-                    content: `subject: ${
-                        email.subject
-                    }; labels: ${email.labels.join(", ")}; body: ${
-                        email.body
-                    };`,
-                },
-            ],
-            model: "llama3-70b-8192",
-            temperature: 0,
-            stream: false,
-            response_format: { type: "json_object" },
-        })
+    // Combine all emails into a single string
+    const combinedEmails = emails
+        .map(
+            (email, index) =>
+                `Email ${index + 1}:\nDate: ${email.date}\nSubject: ${
+                    email.subject
+                }\nLabels: ${email.labels.join(", ")}\nBody: ${email.body}\n\n`
+        )
+        .join("---\n")
+
+    const chatCompletion = await groq.chat.completions.create({
+        messages: [
+            {
+                role: "system",
+                content: SYSTEM_PROMPT,
+            },
+            {
+                role: "user",
+                content: combinedEmails,
+            },
+        ],
+        model: "llama3-70b-8192",
+        temperature: 0,
+        stream: false,
+        response_format: { type: "json_object" },
     })
 
-    const chatCompletions = await Promise.all(chatCompletionPromises)
-
-    return chatCompletions.map((completion) => {
-        return JSON.parse(completion.choices[0].message.content || "{}")
-    })
+    return JSON.parse(chatCompletion.choices[0].message.content || "{}")
 }
