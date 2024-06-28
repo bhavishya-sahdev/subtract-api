@@ -6,8 +6,11 @@ import { user } from "./routes/user"
 import { subscription } from "./routes/subscription"
 import { currency } from "./routes/currency"
 import { prefab } from "./routes/prefab"
+import { updateTransactionsRenewal } from "./scheduledJobs"
 
 const app = new Hono()
+
+updateTransactionsRenewal.start()
 
 app.use(
     cors({
