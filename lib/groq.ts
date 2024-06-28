@@ -11,7 +11,7 @@ For each unique subscription service:
    {
     isSubscription: true,
     service_name: string,
-    next_renewal_date: "DD/MM/YYYY",
+    next_renewal_date: "DD/MM/YYYY" // should be in the future depending on the last transaction date and renewal period,
     renewal_amount_currency_code: string,
     renewal_period_enum: "monthly" | "annually" | "weekly" | "custom",
     renewal_period_days: number, // 1 if renewal_period_enum is not custom, else the period in days
