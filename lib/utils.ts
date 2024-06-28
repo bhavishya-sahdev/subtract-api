@@ -71,10 +71,12 @@ export const cleanEmails = (
             // already filtered out undefined payloads
             if (!message.data.payload)
                 return {
+                    date: "<IGNORE>",
                     sender: "<IGNORE>",
                     body: "<IGNORE>",
                     subject: "<IGNORE>",
                     labels: message.data.labelIds || [],
+                    id: message.data.id,
                 }
 
             if (
@@ -82,6 +84,7 @@ export const cleanEmails = (
                 message.data.payload.parts
             ) {
                 return {
+                    date: message.data.internalDate,
                     sender: message.data.payload.headers?.find(
                         (header) => header.name === "From"
                     )?.value,
@@ -94,9 +97,12 @@ export const cleanEmails = (
                             (header) => header.name === "Subject"
                         )?.value || "<IGNORE>",
                     labels: message.data.labelIds || [],
+                    id: message.data.id,
                 }
             } else if (message.data.payload.mimeType?.startsWith("text/")) {
                 return {
+                    date: message.data.internalDate,
+
                     sender: message.data.payload.headers?.find(
                         (header) => header.name === "From"
                     )?.value,
@@ -106,9 +112,12 @@ export const cleanEmails = (
                             (header) => header.name === "Subject"
                         )?.value || "<IGNORE>",
                     labels: message.data.labelIds || [],
+                    id: message.data.id,
                 }
             }
             return {
+                date: message.data.internalDate,
+
                 sender: message.data.payload.headers?.find(
                     (header) => header.name === "From"
                 )?.value,
@@ -118,6 +127,7 @@ export const cleanEmails = (
                         (header) => header.name === "Subject"
                     )?.value || "<IGNORE>",
                 labels: message.data.labelIds || [],
+                id: message.data.id,
             }
         })
         .map((email) => {
@@ -129,10 +139,15 @@ export const cleanEmails = (
             body = body.replace(/http(s)?:\/\/\S+/g, "")
 
             return {
+                // convert to dd-mm-yyyy
+                date: email.date
+                    ? new Date(parseInt(email.date)).toLocaleDateString("en-GB")
+                    : "<IGNORE>",
                 sender: email.sender,
                 body,
                 subject: email.subject,
                 labels: email.labels,
+                id: email.id,
             }
         })
 }
