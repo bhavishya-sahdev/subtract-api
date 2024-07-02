@@ -146,7 +146,10 @@ auth.post("/google", async (c) => {
 
     try {
         // exchange auth-code for tokens
-        const { tokens } = await authClient.getToken(code)
+        const { tokens } = await authClient.getToken({
+            code,
+            redirect_uri: "https://www.getsubtract.xyz",
+        })
 
         if (
             !tokens.access_token ||
