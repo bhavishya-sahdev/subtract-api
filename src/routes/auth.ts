@@ -190,9 +190,9 @@ auth.post("/google", async (c) => {
             // generate JWT token
             const token = generateToken({ userId: foundUser[0].uuid })
             setCookie(c, "token", token, {
-                secure: process.env.NODE_ENV === "development" ? false : true,
+                secure: true,
                 httpOnly: true,
-                domain: "localhost",
+                domain: process.env.DOMAIN_NAME || "localhost",
                 sameSite: "Lax",
                 expires: addHours(new Date(), 1),
             })
@@ -222,6 +222,6 @@ auth.post("/google", async (c) => {
         })
         return c.json({ data: { token }, error: null })
     } catch (err: any) {
-        return c.json({ error: err.message, data: null }, 400)
+        return c.json({ error: err, data: null }, 400)
     }
 })
