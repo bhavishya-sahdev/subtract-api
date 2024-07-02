@@ -16,7 +16,6 @@ export const user = new Hono()
  */
 user.get("/", async (c) => {
     const payload = verifyAndDecodeTokenFromCookie(c)
-    console.log(payload)
     if (payload.error) {
         return c.json(
             { data: null, error: payload.error.message },

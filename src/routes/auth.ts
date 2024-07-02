@@ -219,8 +219,8 @@ auth.post("/google", async (c) => {
         setCookie(c, "token", token, {
             secure: true,
             httpOnly: true,
-            domain: "localhost",
-            sameSite: "None",
+            domain: process.env.DOMAIN_NAME || "localhost",
+            sameSite: "Lax",
             expires: addHours(new Date(), 1),
         })
         return c.json({ data: { token }, error: null })
