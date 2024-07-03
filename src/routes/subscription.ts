@@ -1,3 +1,4 @@
+import { validPaymentStatusValues } from "db/schema/payment"
 import {
     deleteSubscriptionByUuid,
     findSubscriptionByUuid,
@@ -56,12 +57,22 @@ subscription.post("/", async (c) => {
 })
 
 const updateSubscriptionSchema = z.object({
-    name: z.string().optional(),
-    creationDate: z.date().optional(),
-    renewalPeriod: z.enum(validRenewalPeriodValues).optional(),
-    upcomingPaymentDate: z.date().optional(),
-    currency: z.string().optional(),
-    renewalPrice: z.number().optional(),
+    subscription: z.object({
+        name: z.string(),
+        creationDate: z.coerce.date(),
+        renewalPeriodEnum: z.enum(validRenewalPeriodValues),
+        renewalPeriodDays: z.number(),
+        currencyId: z.string(),
+        renewalAmount: z.coerce.string(),
+    }),
+    payments: z.array(
+        z.object({
+            date: z.coerce.date(),
+            amount: z.coerce.string(),
+            currencyId: z.string(),
+            paymentStatusEnum: z.enum(validPaymentStatusValues),
+        })
+    ),
 })
 /**
  * Update subscription
@@ -86,7 +97,8 @@ subscription.post("/:uuid/update", async (c) => {
     try {
         const updatedSubscription = await updateSubscriptionByUuid(
             subscriptionId,
-            data,
+            validatedInput.data.subscription,
+            validatedInput.data.payments,
             payload.data.userId
         )
         return c.json({ data: updatedSubscription[0], error: null })
