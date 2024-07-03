@@ -135,7 +135,6 @@ payment.get("/upcoming", async (c) => {
  */
 payment.get("/by-timeframe", async (c) => {
     const payload = verifyAndDecodeTokenFromCookie(c)
-    const { period } = c.req.query()
     if (payload.error) {
         return c.json(
             { data: null, error: payload.error.message },
@@ -144,11 +143,18 @@ payment.get("/by-timeframe", async (c) => {
     }
 
     try {
-        const paymentStats = await getPaymentStatsByTimeFrame(
+        const paymentStatsYear = await getPaymentStatsByTimeFrame(
             payload.data.userId,
-            period === "year" ? "year" : "month"
+            "year"
         )
-        return c.json({ data: paymentStats, error: null })
+        const paymentStatsMonth = await getPaymentStatsByTimeFrame(
+            payload.data.userId,
+            "month"
+        )
+        return c.json({
+            data: { year: paymentStatsYear, month: paymentStatsMonth },
+            error: null,
+        })
     } catch (err: any) {
         return c.json({ error: err.message, data: null }, 500)
     }
