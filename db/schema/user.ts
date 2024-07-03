@@ -1,10 +1,11 @@
-import { boolean, integer, pgTable, varchar } from "drizzle-orm/pg-core"
+import { boolean, integer, pgTable, uuid, varchar } from "drizzle-orm/pg-core"
 import { OmitDefaultsFromType } from "lib/utils"
 import { sharedColumns } from "./shared"
 import { eq, relations } from "drizzle-orm"
 import { subscription } from "./subscription"
 import { db } from "db/connect"
 import { payment } from "./payment"
+import { currency } from "./currency"
 
 export const user = pgTable("user", {
     ...sharedColumns,
@@ -14,6 +15,10 @@ export const user = pgTable("user", {
     hashedPassword: varchar("hashed_password").notNull(),
     subscriptionCount: integer("subscription_count").default(0),
     paymentCount: integer("payment_count").default(0),
+    preferredCurrencyId: uuid("preferred_currency_id")
+        .references(() => currency.uuid, { onDelete: "set default" })
+        .default("6ca4676c-2612-4a1e-a0cd-661b03b910d5")
+        .notNull(),
     isOnboardingComplete: boolean("is_onboarding_complete").default(false),
 
     isGoogleUser: boolean("is_google_user").default(false),
@@ -23,9 +28,13 @@ export const user = pgTable("user", {
     googleTokenExpiresAt: varchar("google_token_expires_at"),
 })
 
-export const userRelations = relations(user, ({ many }) => ({
+export const userRelations = relations(user, ({ many, one }) => ({
     subscriptions: many(subscription),
     payments: many(payment),
+    currency: one(currency, {
+        fields: [user.preferredCurrencyId],
+        references: [currency.uuid],
+    }),
 }))
 
 export type User = OmitDefaultsFromType<typeof user.$inferSelect>
