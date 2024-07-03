@@ -225,6 +225,6 @@ auth.post("/google", async (c) => {
         })
         return c.json({ data: { token }, error: null })
     } catch (err: any) {
-        return c.json({ error: err, data: null }, 400)
+        return c.json({ error: err.message, data: null }, 400)
     }
 })
