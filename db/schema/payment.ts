@@ -13,6 +13,7 @@ import { and, eq, relations, sql } from "drizzle-orm"
 import { db } from "db/connect"
 import { user } from "./user"
 import { currency } from "./currency"
+import { rates } from "lib/currency"
 
 export const validPaymentStatusValues = ["paid", "upcoming", "pending"] as const
 export const paymentStatusEnum = pgEnum(
@@ -112,38 +113,79 @@ export const getPaymentStatsByTimeFrame = async (
     ownerId: string,
     period: "month" | "year" = "month"
 ) => {
-    const interval = period === "month" ? "1 month" : "1 year"
-    const res = await db.execute(sql`
-        WITH periods AS (
-            SELECT date_trunc(${period}, generate_series(
-                (SELECT date_trunc(${period}, MIN(date)) FROM payment WHERE owner_id = ${ownerId}),
-                (SELECT date_trunc(${period}, MAX(date)) FROM payment WHERE owner_id = ${ownerId}),
-                ${interval}::interval
-            )) AS period
-        )
-        SELECT
-            periods.period,
-            COALESCE(payment.payment_count, 0) AS payment_count,
-            COALESCE(payment.total_amount, 0) AS total_amount
-        FROM
-            periods
-        LEFT JOIN (
-            SELECT
-                DATE_TRUNC(${period}, date) AS period,
-                COUNT(*) AS payment_count,
-                SUM(amount) AS total_amount
-            FROM
-                payment
-            WHERE
-                owner_id = ${ownerId}
-            GROUP BY
-                period
-        ) AS payment ON periods.period = payment.period
-        ORDER BY
-            periods.period DESC;
-    `)
+    const currencies = await db.select().from(currency)
 
-    return res.rows
+    // First, get the user's preferred currency
+    const { preferredCurrencyId } = (
+        await db
+            .select({ preferredCurrencyId: user.preferredCurrencyId })
+            .from(user)
+            .where(eq(user.uuid, ownerId))
+    )[0]
+
+    if (!preferredCurrencyId) {
+        throw new Error("User's preferred currency not found")
+    }
+
+    const payments = await db
+        .select({
+            uuid: payment.uuid,
+            date: payment.date,
+            amount: payment.amount,
+            currencyId: payment.currencyId,
+        })
+        .from(payment)
+        .where(eq(payment.ownerId, ownerId))
+
+    const convertedPayments = payments
+        .map((p) => {
+            const paymentCurrencyCode =
+                currencies.find((c) => c.uuid === p.currencyId)?.code || "USD"
+            const preferredCurrencyCode =
+                currencies.find((c) => c.uuid === preferredCurrencyId)?.code ||
+                "USD"
+            const convertedAmount = rates.convert(
+                parseFloat(p.amount),
+                paymentCurrencyCode,
+                preferredCurrencyCode
+            )
+
+            return {
+                ...p,
+                convertedAmount,
+                preferredCurrencyCode,
+            }
+        })
+        .map((p) => {
+            // group by month or year
+            const date = new Date(p.date)
+            let key = ""
+            if (period === "month") {
+                key = `${date.getFullYear()}-${date.getMonth() + 1}`
+            } else {
+                key = `${date.getFullYear()}`
+            }
+            return {
+                ...p,
+                key,
+            }
+        })
+
+    const groupedPayments = convertedPayments.reduce((acc, p) => {
+        if (!acc[p.key]) {
+            acc[p.key] = {
+                payments: [],
+                total: 0,
+                preferredCurrencyCode: "",
+            }
+        }
+        acc[p.key]["total"] += p.convertedAmount
+        acc[p.key]["payments"].push(p)
+        acc[p.key]["preferredCurrencyCode"] = p.preferredCurrencyCode
+        return acc
+    }, {} as Record<string, { payments: Pick<Payment, "amount" | "date" | "uuid" | "currencyId">[]; total: number; preferredCurrencyCode: string }>)
+
+    return groupedPayments
 }
 
 export const getUpcomingPayments = async (ownerId: string) => {
