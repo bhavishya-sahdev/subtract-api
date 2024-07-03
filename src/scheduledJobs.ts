@@ -1,7 +1,8 @@
 import { db } from "db/connect"
 import { payment } from "db/schema/payment"
 import { subscription } from "db/schema/subscription"
-import { and, eq } from "drizzle-orm"
+import { and, eq, lte } from "drizzle-orm"
+import { fetchAndStoreRates } from "lib/currency"
 import cron from "node-cron"
 
 export const updateTransactionsRenewal = cron.schedule(
@@ -17,7 +18,7 @@ export const updateTransactionsRenewal = cron.schedule(
             })
             .where(
                 and(
-                    eq(payment.date, new Date()),
+                    lte(payment.date, new Date()),
                     eq(payment.paymentStatusEnum, "upcoming")
                 )
             )
@@ -72,3 +73,8 @@ export const updateTransactionsRenewal = cron.schedule(
         })
     }
 )
+
+export const updateExchangeRates = cron.schedule("0 0 * * *", async () => {
+    console.log("Running scheduled job: updateExchangeRates")
+    await fetchAndStoreRates()
+})
