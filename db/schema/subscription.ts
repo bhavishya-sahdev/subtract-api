@@ -109,15 +109,33 @@ export const findSubscriptionByUuid = async (uuid: string, ownerId: string) => {
 export const updateSubscriptionByUuid = async (
     uuid: string,
     updatedColumns: UpdateSubscription,
+    payments: TNewPayment[],
     ownerId: string
 ) => {
-    return await db
+    const sub = await db
         .update(subscription)
         .set(updatedColumns)
         .where(
             and(eq(subscription.uuid, uuid), eq(subscription.ownerId, ownerId))
         )
-        .returning({ updatedSubscriptionId: subscription.uuid })
+        .returning()
+
+    await db.delete(payment).where(eq(payment.subscriptionId, uuid))
+
+    const paymentPromises = payments.map((p) => {
+        return db
+            .insert(payment)
+            .values({
+                ...p,
+                ownerId: ownerId,
+                subscriptionId: uuid,
+            })
+            .returning()
+    })
+
+    await Promise.all(paymentPromises)
+
+    return sub.map((s) => ({ ...s, payments }))
 }
 
 export const deleteSubscriptionByUuid = async (
@@ -187,6 +205,7 @@ export const getSubscriptionStatsByTimeFrame = async (
             SELECT
                 DATE_TRUNC(${period}, created_date) AS period,
                 COUNT(*) AS subscription_count
+                
             FROM
                 subscription
             WHERE
